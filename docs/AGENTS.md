@@ -1,6 +1,71 @@
-# AGENTS.md
+# AGENTS.md - Guide for n8n Node Development
 
-Guidance for node development in the nodes-base package.
+This guide provides complete instructions for developing n8n community nodes using AI (GitHub Copilot, Cursor, Claude, etc.).
+
+## 🚀 Quick Start
+
+To start developing an n8n node:
+
+1. **Read this complete guide** to understand the architecture
+2. **Use the AI prompts** in `docs/ai-prompts/` for automated assistance
+3. **Follow the best practices** documented here
+
+## 📋 Guide Contents
+
+### [Node Development](./AGENTS.md#node-structure)
+- Basic node structure
+- Node types (Programmatic, Declarative, Triggers)
+- Parameters and configuration
+- Versioning and credentials
+
+### [Testing & QA](./ai-prompts/README.md)
+- **[Unit Testing](./ai-prompts/UNIT_TESTING.md)** - Unit tests with Jest
+- **[Workflow Testing](./ai-prompts/WORKFLOW_TESTING.md)** - Integration tests with workflows
+- **[Testing Quick Guide](./ai-prompts/QUICK_GUIDE.md)** - How to use AI to write tests
+
+### [Project Architecture](./ARCHITECTURE.md)
+- Directory structure
+- Design patterns
+- Code best practices
+
+### [Development & Setup](./DEVELOPMENT.md)
+- Environment setup
+- Development commands
+- Debugging and troubleshooting
+
+### [Publishing](./PUBLISHING.md)
+- Preparation for publishing
+- Release process
+- Version maintenance
+
+## 🤖 Available AI Prompts
+
+Specialized prompts for AI are in `docs/ai-prompts/`:
+
+- **[UNIT_TESTING.md](./ai-prompts/UNIT_TESTING.md)** - Prompt for unit test development
+- **[WORKFLOW_TESTING.md](./ai-prompts/WORKFLOW_TESTING.md)** - Prompt for workflow test development
+- **[QUICK_GUIDE.md](./ai-prompts/QUICK_GUIDE.md)** - Quick guide for AI usage
+
+## 🛠️ Recommended Development Workflow
+
+```mermaid
+graph TD
+    A[Plan Your API] --> B[Configure Credentials]
+    B --> C[Create Node Structure]
+    C --> D[Implement Operations]
+    D --> E[Write Unit Tests]
+    E --> F[Write Workflow Tests]
+    F --> G[Manual Testing]
+    G --> H[Publish Node]
+```
+
+## 📚 Additional Resources
+
+- [Official n8n Documentation](https://docs.n8n.io/)
+- [Community Nodes Guide](https://docs.n8n.io/integrations/community-nodes/)
+- [API Reference](https://docs.n8n.io/api/)
+
+---
 
 ## Node Structure
 

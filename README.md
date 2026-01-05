@@ -26,6 +26,14 @@ This repository serves as a **starting template** for building custom n8n commun
 - ✅ **Automated releases** with release-it
 - ✅ **AI development prompts** for assisted coding
 
+## 📚 Documentation
+
+- **[AGENTS.md](./docs/AGENTS.md)** - Complete guide for n8n node development with AI assistance
+- **[AI Prompts](./docs/ai-prompts/)** - Specialized prompts for AI-assisted development
+- **[Architecture](./docs/ARCHITECTURE.md)** - Project structure and design patterns
+- **[Development](./docs/DEVELOPMENT.md)** - Setup and development workflow
+- **[Publishing](./docs/PUBLISHING.md)** - Release and publishing guide
+
 ## Quick Start
 
 ### 1. Clone and Setup
