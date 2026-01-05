@@ -1,0 +1,73 @@
+{
+  "name": "n8n-nodes-starter",
+  "version": "1.0.0",
+  "description": "Starter template for n8n community nodes",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n-nodes",
+    "typescript",
+    "boilerplate",
+    "n8n-agents",
+    "workflow-automation"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/n8n-community-node-starter",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/n8n-community-node-starter.git"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "npx rimraf dist && tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint nodes/** credentials/** package.json",
+    "lintfix": "eslint nodes/** credentials/** package.json --fix",
+    "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes/** credentials/** package.json",
+    "release": "release-it",
+    "test": "jest"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/ExampleServiceApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/ExampleService/ExampleService.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/parser": "~8.32.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.3",
+    "gulp": "^5.0.0",
+    "jest": "^30.2.0",
+    "nock": "^14.0.10",
+    "prettier": "^3.5.3",
+    "release-it": "^17.10.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.8.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^nodes/(.*)$": "<rootDir>/nodes/$1",
+      "^credentials/(.*)$": "<rootDir>/credentials/$1"
+    }
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

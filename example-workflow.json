@@ -1,0 +1,99 @@
+{
+  "name": "Example Service Operations Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "itemCrud",
+        "operation": "listItems",
+        "returnAll": false,
+        "limit": 5
+      },
+      "name": "List Items",
+      "type": "n8n-nodes-starter.exampleService",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "credentials": {
+        "exampleServiceApi": {
+          "id": "1",
+          "name": "Example Service API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "itemCrud",
+        "operation": "getItem",
+        "itemId": "1"
+      },
+      "name": "Get Item",
+      "type": "n8n-nodes-starter.exampleService",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "exampleServiceApi": {
+          "id": "1",
+          "name": "Example Service API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "itemCrud",
+        "operation": "createItem",
+        "title": "New Example Item",
+        "body": "This is a new item created via the API",
+        "userId": 1
+      },
+      "name": "Create Item",
+      "type": "n8n-nodes-starter.exampleService",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "exampleServiceApi": {
+          "id": "1",
+          "name": "Example Service API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "itemCrud",
+        "operation": "updateItem",
+        "itemId": "1",
+        "title": "Updated Example Item",
+        "body": "This item has been updated",
+        "userId": 1
+      },
+      "name": "Update Item",
+      "type": "n8n-nodes-starter.exampleService",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "credentials": {
+        "exampleServiceApi": {
+          "id": "1",
+          "name": "Example Service API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "itemCrud",
+        "operation": "deleteItem",
+        "itemId": "1"
+      },
+      "name": "Delete Item",
+      "type": "n8n-nodes-starter.exampleService",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "credentials": {
+        "exampleServiceApi": {
+          "id": "1",
+          "name": "Example Service API"
+        }
+      }
+    }
+  ],
+  "connections": {},
+  "settings": {},
+  "staticData": null
+}

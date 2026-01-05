@@ -1,0 +1,294 @@
+name: Release — publish to npm (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Choose release type (auto-increases version). Ignored if custom_version is set.'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: 'Optional: Specify exact version (e.g., 1.2.3). If provided, release_type is ignored.'
+        required: false
+        type: string
+      branch:
+        description: 'Branch to use for release'
+        required: false
+        default: 'master'
+        type: string
+      dry_run:
+        description: 'Dry run mode: test without publishing'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Pull latest changes
+        run: |
+          git pull origin ${{ github.event.inputs.branch }}
+          CURRENT_VERSION=$(node -p 'require("./package.json").version')
+          echo "📦 Current version: $CURRENT_VERSION"
+
+      - name: Check working directory is clean
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            echo "❌ Error: Working directory is not clean"
+            echo ""
+            git status
+            exit 1
+          fi
+          echo "✅ Working directory is clean"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: Configure npm auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "❌ Error: NPM_TOKEN secret is not set"
+            exit 1
+          fi
+          printf "//registry.npmjs.org/:_authToken=%s\n" "$NPM_TOKEN" > ~/.npmrc
+
+      - name: Install dependencies
+        run: |
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run tests
+        run: |
+          echo "🧪 Running tests before release..."
+          npm run lint
+          npm test
+          echo "✅ All tests passed!"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Configure remote with authentication for release-it push
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Calculate next version
+        id: version
+        run: |
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          CURRENT=$(node -p 'require("./package.json").version')
+          
+          if [ -n "$CUSTOM_VERSION" ]; then
+            # Validate custom version format (basic semver check)
+            if ! echo "$CUSTOM_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$' > /dev/null; then
+              echo "❌ Invalid version format: $CUSTOM_VERSION"
+              echo "Expected format: x.y.z or x.y.z-prerelease"
+              exit 1
+            fi
+            
+            NEXT_VERSION="$CUSTOM_VERSION"
+            RELEASE_TYPE="custom"
+          else
+            RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+            
+            # Install semver for proper version calculation
+            npm install -g semver
+            NEXT_VERSION=$(semver -i $RELEASE_TYPE $CURRENT)
+          fi
+          
+          echo "CURRENT_VERSION=$CURRENT" >> $GITHUB_OUTPUT
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "RELEASE_TYPE=$RELEASE_TYPE" >> $GITHUB_OUTPUT
+          echo ""
+          echo "📦 Release plan:"
+          echo "   Type: $RELEASE_TYPE"
+          echo "   Current: $CURRENT"
+          echo "   Next: $NEXT_VERSION"
+
+      - name: Check version doesn't exist on npm
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          PACKAGE_NAME=$(node -p 'require("./package.json").name')
+          NEXT_VERSION="${{ steps.version.outputs.NEXT_VERSION }}"
+          
+          echo "Checking if version $NEXT_VERSION exists on npm..."
+          
+          if npm view ${PACKAGE_NAME}@${NEXT_VERSION} version 2>/dev/null; then
+            echo "❌ Error: Version ${NEXT_VERSION} already exists on npm"
+            echo "Please choose a different version or use a custom version."
+            exit 1
+          fi
+          
+          echo "✅ Version ${NEXT_VERSION} is available"
+
+      - name: Dry-run release
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧪 DRY RUN MODE"
+          echo ""
+          echo "Would release version: ${{ steps.version.outputs.NEXT_VERSION }}"
+          echo ""
+          
+          # Validate package can be built and packed
+          npm run build || echo "Build step not found or failed"
+          npm pack --dry-run
+          
+          echo ""
+          echo "✅ Dry-run validation completed!"
+          echo "No changes were made to the repository or npm."
+
+      - name: Run release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        id: release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🚀 Starting release process..."
+          echo ""
+          
+          CURRENT_VERSION=$(node -p 'require("./package.json").version')
+          echo "Current version in package.json: $CURRENT_VERSION"
+          echo ""
+          
+          # Build the project
+          npm run build || echo "Build step not found or failed"
+          
+          # Run release-it with the appropriate version
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          
+          if [ -n "$CUSTOM_VERSION" ]; then
+            echo "📌 Using custom version: $CUSTOM_VERSION"
+            npm run release -- "$CUSTOM_VERSION"
+          else
+            echo "📌 Using release type: $RELEASE_TYPE"
+            npm run release -- "$RELEASE_TYPE"
+          fi
+          
+          echo ""
+          echo "✅ Release completed!"
+
+      - name: Verify release
+        if: ${{ github.event.inputs.dry_run != 'true' && success() }}
+        run: |
+          # Update local repo after release
+          git pull origin ${{ github.event.inputs.branch }}
+          
+          FINAL_VERSION=$(node -p 'require("./package.json").version')
+          EXPECTED_VERSION="${{ steps.version.outputs.NEXT_VERSION }}"
+          
+          echo "📦 Published version: $FINAL_VERSION"
+          
+          if [ "$FINAL_VERSION" = "$EXPECTED_VERSION" ]; then
+            echo "✅ Version matches expected: $EXPECTED_VERSION"
+          else
+            echo "⚠️ Note: Version is $FINAL_VERSION (expected $EXPECTED_VERSION)"
+            echo "This can happen if release-it applied additional bumps"
+          fi
+          
+          # Save for summary step
+          echo "FINAL_VERSION=$FINAL_VERSION" >> $GITHUB_OUTPUT
+        id: verify
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.npmrc || true
+
+      - name: Summary
+        if: always()
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          JOB_STATUS="${{ job.status }}"
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "# 🧪 Dry Run Complete" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$JOB_STATUS" = "success" ]; then
+              echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Validation failed - see logs above" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$CUSTOM_VERSION" ]; then
+              echo "**Custom version:** $CUSTOM_VERSION" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "**Current version:** ${{ steps.version.outputs.CURRENT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Would release:** ${{ steps.version.outputs.NEXT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ No changes were made" >> $GITHUB_STEP_SUMMARY
+            
+          elif [ "$JOB_STATUS" = "success" ]; then
+            VERSION="${{ steps.verify.outputs.FINAL_VERSION }}"
+            PACKAGE_NAME=$(node -p 'require("./package.json").name')
+            
+            echo "# 🎉 Release v${VERSION} Published!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| | |" >> $GITHUB_STEP_SUMMARY
+            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📦 Package | \`${PACKAGE_NAME}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🏷️ Version | \`${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$CUSTOM_VERSION" ]; then
+              echo "| 🎯 Type | Custom version |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| 🎯 Type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "| 🌿 Branch | \`${{ github.event.inputs.branch }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📦 [View on npm](https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION})" >> $GITHUB_STEP_SUMMARY
+            echo "- 🏷️ [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${VERSION})" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 [Compare changes](https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.CURRENT_VERSION }}...${VERSION})" >> $GITHUB_STEP_SUMMARY
+            
+          else
+            echo "# ❌ Release Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Status:** Failed" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$CUSTOM_VERSION" ]; then
+              echo "**Attempted version:** $CUSTOM_VERSION" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "**Current version:** ${{ steps.version.outputs.CURRENT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the workflow logs above for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ No changes were published to npm" >> $GITHUB_STEP_SUMMARY
+          fi
