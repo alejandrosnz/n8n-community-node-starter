@@ -14,7 +14,7 @@ This guide covers local development, testing, and deployment of n8n community no
 
 ```bash
 # Clone your forked repository
-git clone https://github.com/yourusername/n8n-nodes-your-api.git
+git clone https://github.com/alejandrosnz/n8n-nodes-your-api.git
 cd n8n-nodes-your-api
 
 # Install dependencies
@@ -66,7 +66,7 @@ Edit `package.json`:
     "email": "your.email@example.com"
   },
   "repository": {
-    "url": "https://github.com/yourusername/n8n-nodes-your-api-name.git"
+    "url": "https://github.com/alejandrosnz/n8n-nodes-your-api-name.git"
   }
 }
 ```

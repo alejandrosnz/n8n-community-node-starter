@@ -28,7 +28,7 @@ Your `package.json` must include:
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/n8n-nodes-your-node-name.git"
+    "url": "https://github.com/alejandrosnz/n8n-nodes-your-node-name.git"
   },
   "n8n": {
     "n8nNodesApiVersion": 1,

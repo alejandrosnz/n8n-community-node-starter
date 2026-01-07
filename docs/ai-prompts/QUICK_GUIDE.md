@@ -1,5 +1,17 @@
 # Quick Guide: Using AI to Write Tests
 
+## ⚠️ CRITICAL: Always Create Tests
+
+**IMPORTANT**: You MUST write tests for every operation you create. No exceptions.
+
+**Process**:
+1. Create operation file
+2. **IMMEDIATELY** create test file (don't wait)
+3. Write tests BEFORE moving to next operation
+4. Run `npm test` to verify
+
+**Why**: Agents sometimes skip tests. This prevents that.
+
 To write unit tests it is suggested to use AI for help.
 
 ## 📖 Related Documentation

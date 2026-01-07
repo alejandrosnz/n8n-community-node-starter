@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the n8n-community-node-starter! T
 
 ## Ways to Contribute
 
-- **Bug reports**: Report issues in the [issue tracker](https://github.com/yourusername/n8n-community-node-starter/issues)
+- **Bug reports**: Report issues in the [issue tracker](https://github.com/alejandrosnz/n8n-community-node-starter/issues)
 - **Feature requests**: Suggest new features or improvements
 - **Code contributions**: Submit pull requests with fixes or enhancements
 - **Documentation**: Improve documentation or add examples
@@ -101,8 +101,8 @@ For feature requests:
 
 ## Community
 
-- **Discussions**: Use [GitHub Discussions](https://github.com/yourusername/n8n-community-node-starter/discussions) for questions
-- **Issues**: Use [GitHub Issues](https://github.com/yourusername/n8n-community-node-starter/issues) for bugs and features
+- **Discussions**: Use [GitHub Discussions](https://github.com/alejandrosnz/n8n-community-node-starter/discussions) for questions
+- **Issues**: Use [GitHub Issues](https://github.com/alejandrosnz/n8n-community-node-starter/issues) for bugs and features
 - **Code of Conduct**: Be respectful and inclusive
 
 ## License

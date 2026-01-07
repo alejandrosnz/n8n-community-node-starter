@@ -14,6 +14,20 @@ This repository serves as a **starting template** for building custom n8n commun
 - **Example implementation** using JSONPlaceholder API
 - **AI-assisted development** prompts and guides
 
+## Why Choose This Starter?
+
+This starter is designed to be **better than the official n8n starter** in every way:
+
+| Feature | Official Starter | This Starter |
+|---------|------------------|--------------|
+| Architecture | Programmatic | ✅ Declarative |
+| Testing | None | ✅ Unit + Integration |
+| CI/CD | None | ✅ GitHub Actions |
+| AI Assistance | None | ✅ Specialized prompts |
+| Example Code | Minimal | ✅ Complete CRUD |
+| Documentation | Basic | ✅ Comprehensive |
+| Agent Ready | No | ✅ 100% Compatible |
+
 ## Features
 
 - ✅ **TypeScript-first** development
@@ -26,20 +40,52 @@ This repository serves as a **starting template** for building custom n8n commun
 - ✅ **Automated releases** with release-it
 - ✅ **AI development prompts** for assisted coding
 
+## How It Works
+
+### Declarative Node Architecture
+
+This starter uses **declarative routing** instead of custom execute functions:
+- **No boilerplate code**: Define operations as configuration
+- **Automatic HTTP handling**: n8n manages requests/responses
+- **Better maintainability**: Changes are configuration, not code
+
+### Resource/Operation Pattern
+
+Operations are organized in a scalable hierarchy:
+```
+YourNode
+├── Resource 1 (e.g., "Users")
+│   ├── Create User
+│   ├── Get User
+│   └── Update User
+└── Resource 2 (e.g., "Posts")
+    ├── List Posts
+    └── Delete Post
+```
+
+### AI-First Development
+
+Specialized prompts guide AI assistants to:
+- Generate properly structured operations
+- Create comprehensive tests automatically
+- Follow n8n best practices
+
 ## 📚 Documentation
 
 - **[AGENTS.md](./docs/AGENTS.md)** - Complete guide for n8n node development with AI assistance
 - **[AI Prompts](./docs/ai-prompts/)** - Specialized prompts for AI-assisted development
+- **[Agent Examples](./docs/AGENT_EXAMPLES.md)** - Concrete prompt examples for AI-assisted development
 - **[Architecture](./docs/ARCHITECTURE.md)** - Project structure and design patterns
 - **[Development](./docs/DEVELOPMENT.md)** - Setup and development workflow
 - **[Publishing](./docs/PUBLISHING.md)** - Release and publishing guide
 
 ## Quick Start
 
-### 1. Clone and Setup
+### 1. Fork and Setup
 
 ```bash
-# Clone the repository
+# Fork this repository on GitHub first
+# Then clone YOUR fork (replace 'yourusername' with your GitHub username)
 git clone https://github.com/yourusername/n8n-community-node-starter.git
 cd n8n-community-node-starter
 
@@ -69,7 +115,7 @@ Edit the following files to adapt the boilerplate to your API:
     "email": "your.email@example.com"
   },
   "repository": {
-    "url": "https://github.com/yourusername/n8n-nodes-your-api.git"
+    "url": "https://github.com/alejandrosnz/n8n-nodes-your-api.git"
   }
 }
 ```
@@ -143,9 +189,12 @@ npm publish
 
 ## Using AI Agents for Development
 
-This boilerplate includes specialized prompts to help AI assistants create n8n nodes. See [docs/ai-prompts/](docs/ai-prompts/) for detailed guides.
+This boilerplate includes specialized prompts to help AI assistants create n8n nodes. See [docs/ai-prompts/](docs/ai-prompts/) for detailed guides and [docs/AGENT_EXAMPLES.md](docs/AGENT_EXAMPLES.md) for concrete examples.
 
 ### Example Prompt for AI
+
+<details>
+<summary>Click to see an example agent prompt</summary>
 
 ```
 I need to create a new n8n node for the GitHub API. I want to implement:
@@ -163,13 +212,19 @@ Please use this boilerplate structure and help me:
 Base it on the existing ExampleService structure in this n8n-community-node-starter.
 ```
 
+</details>
+
+For more examples, see [Agent Examples](docs/AGENT_EXAMPLES.md).
+
 ## Development
 
 ### Local Development Setup
 
-1. **Clone and install**:
+1. **Fork and clone** (if not already done):
    ```bash
-   git clone <your-repo>
+   # Fork this repository on GitHub
+   # Then clone YOUR fork
+   git clone https://github.com/yourusername/n8n-community-node-starter.git
    cd n8n-community-node-starter
    npm install
    ```
