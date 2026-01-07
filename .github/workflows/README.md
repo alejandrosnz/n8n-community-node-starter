@@ -58,8 +58,9 @@ npm authentication token for publishing packages.
 2. Log in to your account
 3. Go to "Access Tokens" in your account settings
 4. Click "Generate New Token"
-5. Choose "Automation" or "Publish" type
-6. Copy the generated token
+5. Enable 'Bypass 2FA Authentication'
+6. Set Read and Write Permissions to All Packages
+6. Generate and copy the new token
 
 **How to set in repository**:
 1. Go to your GitHub repository
