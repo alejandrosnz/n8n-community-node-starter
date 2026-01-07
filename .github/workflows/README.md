@@ -1,6 +1,6 @@
 # GitHub Actions Workflows
 
-This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-to-telegram-html project.
+This directory contains the GitHub Actions workflows for the n8n community node project.
 
 ## Workflows
 
@@ -25,8 +25,6 @@ This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-
 
 **Usage**: This workflow runs automatically. No manual intervention needed.
 
----
-
 ### Release — publish to npm (`publish.yml`)
 
 **Purpose**: Manual workflow for releasing new versions of the package to npm.
@@ -35,41 +33,30 @@ This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-
 
 **Inputs**:
 - `release_type` (choice, optional, default: 'patch'): Auto-increases version (patch/minor/major)
-- `branch` (string, optional, default: 'master'): Branch to use for release
-- `dry_run` (boolean, optional, default: false): Test mode without publishing
+- `branch` (string, optional, default: 'master'): Branch to use for release.
+- `dry_run` (boolean, optional, default: false): Test mode without publishing.
 
 **What it does**:
-
-1. **Pre-release validation**:
-   - Checks out the specified branch
-   - Verifies working directory is clean (no uncommitted changes)
-   - Validates that the target version doesn't already exist on npm
-   - Runs tests (lint + test suite)
-
-2. **Version bumping** (separate step):
-   - Bumps version in package.json according to release_type
-   - Commits the version change locally (not pushed yet)
-
-3. **Build & Release**:
+1. Checks out the specified branch and verifies working directory is clean
+2. Runs pre-release tests (lint and test suite)
+3. Validates that the target version doesn't already exist on npm
+4. Calculates next version automatically
+5. For **minor/major** releases: Pre-bumps the version in package.json and commits it
+6. Runs `npm run release` which uses `n8n-node release`:
+   - For **patch**: n8n-node automatically bumps the patch version
+   - For **minor/major**: n8n-node detects the version was already bumped and proceeds with current version
    - Builds the project
-   - Runs release-it with `--no-increment` flag to:
-     - Generate changelog from commits
-     - Create git tag with the already-bumped version
-     - Push commits and tags to GitHub
-     - Publish to npm
-     - Create GitHub release
+   - Generates changelog from commits
+   - Creates git tag
+   - Pushes commits and tag to GitHub  
+   - Publishes to npm
+7. Verifies the release and generates a detailed summary
 
-4. **Post-release**:
-   - Verifies the package was published successfully
-   - Generates detailed summary with links
+**How version bumping works**:
+- **Patch releases (1.0.0 → 1.0.1)**: The workflow lets `n8n-node release` handle the version bump automatically
+- **Minor/Major releases (1.0.0 → 1.1.0 or 2.0.0)**: The workflow pre-bumps the version before running `n8n-node release` to avoid double-bumping issues, since `n8n-node release` by default only does patch bumps
 
-**Important**: The workflow uses a **two-step versioning approach** to prevent double-bumping:
-- Step 1: Manual `npm version` to bump package.json
-- Step 2: Release-it with `--no-increment` to use the already-bumped version
-
-This ensures that if you choose "major", you get exactly the major version (e.g., 1.0.0 → 2.0.0), not 2.0.1.
-
-**Timeout**: 15 minutes (workflow will automatically fail if it takes longer)
+**Important**: This corrected workflow prevents the double-bumping bug where major/minor releases would create incorrect versions (e.g., 1.0.0 → 2.0.0 → 2.0.1 instead of 2.0.0).
 
 **Secrets required**:
 
@@ -81,10 +68,9 @@ npm authentication token for publishing packages.
 2. Log in to your account
 3. Go to "Access Tokens" in your account settings
 4. Click "Generate New Token"
-5. Select "Automation" or "Publish" type
-6. Enable 'Bypass 2FA Authentication' if required
-7. Set Read and Write Permissions to All Packages
-8. Generate and copy the new token
+5. Enable 'Bypass 2FA Authentication' if needed
+6. Set Read and Write Permissions to All Packages
+7. Generate and copy the new token
 
 **How to set in repository**:
 1. Go to your GitHub repository
@@ -100,8 +86,6 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 
 **No manual setup required** - This is automatically available in workflows.
 
----
-
 **Usage**:
 1. Go to GitHub Actions tab
 2. Select "Release — publish to npm (manual)"
@@ -116,8 +100,6 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - **Minor release** (1.0.7 → 1.1.0): Set `release_type` to 'minor' - for new features that are backward compatible
 - **Major release** (1.0.7 → 2.0.0): Set `release_type` to 'major' - for breaking changes
 - **Dry run**: Set `dry_run` to true - test the release process without publishing
-
----
 
 ### Release Types Explained
 
@@ -139,35 +121,6 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - Significant architectural changes
 - Example: Changed authentication method or renamed operations
 
----
-
-## Workflow Summary Outputs
-
-After a successful release, the workflow generates a detailed summary including:
-
-**For successful releases**:
-- 📦 Package name and published version
-- 🎯 Release type used
-- 📊 Previous version (for comparison)
-- 🔗 Direct links to:
-  - npm package page
-  - GitHub release
-  - Changelog/compare view
-  - Commit history
-- 📥 Installation command
-
-**For dry runs**:
-- ✅ Validation results
-- Current and target versions
-- Confirmation that no changes were made
-
-**For failures**:
-- ❌ Error status
-- Release details attempted
-- Common troubleshooting tips
-
----
-
 ## Troubleshooting
 
 ### Release fails with "version already exists on npm"
@@ -177,7 +130,6 @@ After a successful release, the workflow generates a detailed summary including:
 **Solutions**:
 - Check existing versions: `npm view <package-name> versions`
 - Choose a different release type (patch/minor/major)
-- The workflow now validates this BEFORE making any changes, so you'll catch this early
 
 ### "NPM_TOKEN not found" error
 
@@ -186,17 +138,7 @@ After a successful release, the workflow generates a detailed summary including:
 **Solutions**:
 - Verify the token exists in repository Settings → Secrets and variables → Actions
 - Generate a new token on npmjs.com if the old one expired
-- Ensure the token has "Automation" or "Publish" permissions with write access
-
-### Tests fail during release
-
-**Cause**: The workflow runs `npm run lint` and `npm test` before releasing.
-
-**Solutions**:
-- Fix the failing tests locally first
-- Run tests locally: `npm run lint && npm test`
-- Commit fixes and try the release again
-- If tests or lint aren't configured, the workflow will warn but continue
+- Ensure the token has "Skip 2FA Authentication" enabled
 
 ### Tests fail in CI but pass locally
 
