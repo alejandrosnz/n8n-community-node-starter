@@ -1,6 +1,6 @@
 {
   "name": "@alejandrosnz/n8n-community-node-starter",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Starter template for n8n community nodes",
   "keywords": [
     "n8n-community-node-package",
