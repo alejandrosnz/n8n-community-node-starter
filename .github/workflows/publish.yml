@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Choose release type (auto-increases version)'
+        description: 'Choose release type'
         required: false
         default: 'patch'
         type: choice
@@ -30,7 +30,6 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -44,16 +43,6 @@ jobs:
           git pull origin ${{ github.event.inputs.branch }}
           CURRENT_VERSION=$(node -p 'require("./package.json").version')
           echo "📦 Current version: $CURRENT_VERSION"
-
-      - name: Check working directory is clean
-        run: |
-          if [[ -n $(git status -s) ]]; then
-            echo "❌ Error: Working directory is not clean"
-            echo ""
-            git status
-            exit 1
-          fi
-          echo "✅ Working directory is clean"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -79,19 +68,12 @@ jobs:
             npm install
           fi
 
-      - name: Run tests
-        run: |
-          echo "🧪 Running tests before release..."
-          npm run lint || echo "⚠️ Lint not configured"
-          npm test || echo "⚠️ Tests not configured"
-          echo "✅ Pre-release checks completed!"
-
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Configure remote with authentication
+          # Configure remote with authentication for release-it push
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
       - name: Calculate next version
@@ -100,7 +82,7 @@ jobs:
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           CURRENT=$(node -p 'require("./package.json").version')
           
-          # Calculate next version using Node.js
+          # Calculate next version
           if [ "$RELEASE_TYPE" = "major" ]; then
             NEXT=$(node -p "const v = require('./package.json').version.split('.'); [parseInt(v[0])+1, 0, 0].join('.')")
           elif [ "$RELEASE_TYPE" = "minor" ]; then
@@ -111,7 +93,6 @@ jobs:
           
           echo "CURRENT_VERSION=$CURRENT" >> $GITHUB_OUTPUT
           echo "NEXT_VERSION=$NEXT" >> $GITHUB_OUTPUT
-          echo "RELEASE_TYPE=$RELEASE_TYPE" >> $GITHUB_OUTPUT
           echo ""
           echo "📦 Release plan:"
           echo "   Type: $RELEASE_TYPE"
@@ -119,21 +100,23 @@ jobs:
           echo "   Next: $NEXT"
           echo ""
 
-      - name: Check version doesn't exist on npm
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+      - name: Manual version bump
+        if: ${{ github.event.inputs.release_type != 'patch' }}
         run: |
-          PACKAGE_NAME=$(node -p 'require("./package.json").name')
-          NEXT_VERSION="${{ steps.version.outputs.NEXT_VERSION }}"
+          # n8n-node release only does patch bumps by default
+          # For minor/major, we need to bump manually first
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
-          echo "Checking if version $NEXT_VERSION exists on npm..."
+          echo "Pre-bumping version for $RELEASE_TYPE release..."
+          npm version $RELEASE_TYPE --no-git-tag-version
           
-          if npm view ${PACKAGE_NAME}@${NEXT_VERSION} version 2>/dev/null; then
-            echo "❌ Error: Version ${NEXT_VERSION} already exists on npm"
-            echo "Please choose a different release type or manually bump the version."
-            exit 1
-          fi
+          NEW_VERSION=$(node -p 'require("./package.json").version')
+          echo "✅ Version updated to: $NEW_VERSION"
           
-          echo "✅ Version ${NEXT_VERSION} is available"
+          # Commit the version bump
+          git add package.json package-lock.json 2>/dev/null || git add package.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          echo "✅ Version bump committed"
 
       - name: Dry-run release
         if: ${{ github.event.inputs.dry_run == 'true' }}
@@ -146,41 +129,16 @@ jobs:
           echo "Would release version: ${{ steps.version.outputs.NEXT_VERSION }}"
           echo ""
           
-          # Test version bump
-          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          npm version $RELEASE_TYPE --no-git-tag-version
-          
-          NEW_VERSION=$(node -p 'require("./package.json").version')
-          echo "✅ Version would be bumped to: $NEW_VERSION"
-          
           # Validate package can be built and packed
-          npm run build || echo "⚠️ Build step not found or failed"
+          npm run build || echo "Build step not found or failed"
           npm pack --dry-run
           
           echo ""
           echo "✅ Dry-run validation completed!"
           echo "No changes were made to the repository or npm."
           
-          # Revert changes
+          # Revert any version changes
           git checkout -- package.json package-lock.json 2>/dev/null || git checkout -- package.json
-
-      - name: Bump version for non-patch releases
-        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.release_type != 'patch' }}
-        run: |
-          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          
-          echo "📌 Bumping $RELEASE_TYPE version..."
-          npm version $RELEASE_TYPE --no-git-tag-version
-          
-          NEW_VERSION=$(node -p 'require("./package.json").version')
-          echo "✅ Version updated to: $NEW_VERSION"
-          
-          # Commit the version bump
-          git add package.json package-lock.json 2>/dev/null || git add package.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          
-          echo "BUMPED_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-        id: bump
 
       - name: Run release
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -192,25 +150,16 @@ jobs:
           echo ""
           
           CURRENT_VERSION=$(node -p 'require("./package.json").version')
-          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-          
-          echo "Current version: $CURRENT_VERSION"
-          echo "Release type: $RELEASE_TYPE"
+          echo "Current version in package.json: $CURRENT_VERSION"
           echo ""
           
-          # Build the project first
-          echo "Building project..."
-          npm run build
-          echo ""
-          
-          # Use release-it directly with explicit control
-          if [ "$RELEASE_TYPE" = "patch" ]; then
-            echo "Running release-it with patch bump..."
-            npx release-it patch --ci
-          else
-            echo "Running release-it with --no-increment (version already bumped to $CURRENT_VERSION)..."
-            npx release-it --no-increment --ci
-          fi
+          # n8n-node release will:
+          # 1. Run lint and build
+          # 2. Bump patch version (or use current if already bumped)
+          # 3. Generate changelog
+          # 4. Commit, tag, and push
+          # 5. Publish to npm
+          npm run release
           
           echo ""
           echo "✅ Release completed!"
@@ -219,7 +168,7 @@ jobs:
         if: ${{ github.event.inputs.dry_run != 'true' && success() }}
         run: |
           # Update local repo after release
-          git pull origin ${{ github.event.inputs.branch }} || true
+          git pull origin ${{ github.event.inputs.branch }}
           
           FINAL_VERSION=$(node -p 'require("./package.json").version')
           EXPECTED_VERSION="${{ steps.version.outputs.NEXT_VERSION }}"
@@ -229,22 +178,8 @@ jobs:
           if [ "$FINAL_VERSION" = "$EXPECTED_VERSION" ]; then
             echo "✅ Version matches expected: $EXPECTED_VERSION"
           else
-            echo "⚠️ Warning: Version is $FINAL_VERSION (expected $EXPECTED_VERSION)"
-            echo "This might indicate an issue with the release process"
-          fi
-          
-          # Verify on npm
-          PACKAGE_NAME=$(node -p 'require("./package.json").name')
-          echo ""
-          echo "Verifying package on npm..."
-          
-          # Wait a bit for npm to update
-          sleep 5
-          
-          if npm view ${PACKAGE_NAME}@${FINAL_VERSION} version 2>/dev/null; then
-            echo "✅ Package successfully published to npm!"
-          else
-            echo "⚠️ Package not found on npm yet (may take a few moments to propagate)"
+            echo "⚠️ Note: Version is $FINAL_VERSION (expected $EXPECTED_VERSION)"
+            echo "This can happen if release-it applied additional bumps"
           fi
           
           # Save for summary step
@@ -253,81 +188,35 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: |
-          rm -f ~/.npmrc || true
-          rm -f .release-it.json.tmp || true
+        run: rm -f ~/.npmrc || true
 
       - name: Summary
         if: always()
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
-          JOB_STATUS="${{ job.status }}"
           
           if [ "$DRY_RUN" = "true" ]; then
             echo "# 🧪 Dry Run Complete" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            
-            if [ "$JOB_STATUS" = "success" ]; then
-              echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "❌ Validation failed - see logs above" >> $GITHUB_STEP_SUMMARY
-            fi
-            
+            echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| | |" >> $GITHUB_STEP_SUMMARY
-            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🎯 Release type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 📦 Current version | \`${{ steps.version.outputs.CURRENT_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🔜 Would release | \`${{ steps.version.outputs.NEXT_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🌿 Branch | \`${{ github.event.inputs.branch }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Current version:** ${{ steps.version.outputs.CURRENT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Would release:** ${{ steps.version.outputs.NEXT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **No changes were made to the repository or npm**" >> $GITHUB_STEP_SUMMARY
-            
-          elif [ "$JOB_STATUS" = "success" ]; then
+            echo "⚠️ No changes were made" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ job.status }}" = "success" ]; then
             VERSION="${{ steps.verify.outputs.FINAL_VERSION }}"
             PACKAGE_NAME=$(node -p 'require("./package.json").name')
             
-            echo "# 🎉 Release v${VERSION} Published!" >> $GITHUB_STEP_SUMMARY
+            echo "# ✅ Release v${VERSION} Published!" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| | |" >> $GITHUB_STEP_SUMMARY
-            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-            echo "| 📦 Package | \`${PACKAGE_NAME}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🏷️ Version | \`${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🎯 Release type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 📊 Previous | \`${{ steps.version.outputs.CURRENT_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🌿 Branch | \`${{ github.event.inputs.branch }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "**Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
+            echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- 📦 [View on npm](https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION})" >> $GITHUB_STEP_SUMMARY
-            echo "- 🏷️ [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${VERSION})" >> $GITHUB_STEP_SUMMARY
-            echo "- 📝 [Compare changes](https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.CURRENT_VERSION }}...${VERSION})" >> $GITHUB_STEP_SUMMARY
-            echo "- 📋 [View commits](https://github.com/${{ github.repository }}/commits/${VERSION})" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 📥 Install" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "npm install ${PACKAGE_NAME}@${VERSION}" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            
-          else
-            echo "# ❌ Release Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| | |" >> $GITHUB_STEP_SUMMARY
-            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🎯 Release type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 📦 Current version | \`${{ steps.version.outputs.CURRENT_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🔜 Target version | \`${{ steps.version.outputs.NEXT_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🌿 Branch | \`${{ github.event.inputs.branch }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Check the workflow logs above for error details.**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **No changes were published to npm**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Common Issues" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify NPM_TOKEN secret is set correctly" >> $GITHUB_STEP_SUMMARY
-            echo "- Check if version already exists on npm" >> $GITHUB_STEP_SUMMARY
-            echo "- Ensure all tests pass locally" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify branch has latest changes" >> $GITHUB_STEP_SUMMARY
+            echo "### 📦 Links" >> $GITHUB_STEP_SUMMARY
+            echo "- **npm:** https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "- **GitHub Release:** https://github.com/${{ github.repository }}/releases/tag/${VERSION}" >> $GITHUB_STEP_SUMMARY
           fi

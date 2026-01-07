@@ -103,6 +103,8 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 
 ### Release Types Explained
 
+**Important Note**: Due to a limitation in `n8n-node release`, minor and major releases will include an additional patch increment. See the [Known Issues](#known-issues) section below for details.
+
 **Patch Release (x.y.Z → x.y.Z+1)**:
 - Bug fixes and small improvements
 - No new features, no breaking changes
@@ -114,12 +116,28 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - API additions (but not removals)
 - Performance improvements
 - Example: Added a new optional parameter to an operation
+- **Actual result**: x.Y.z → x.Y+1.1 (includes extra patch increment)
 
 **Major Release (X.y.z → X+1.0.0)**:
 - Breaking changes to the API
 - Removed features or parameters
 - Significant architectural changes
 - Example: Changed authentication method or renamed operations
+- **Actual result**: X.y.z → X+1.0.1 (includes extra patch increment)
+
+## Known Issues
+
+### n8n-node Release Double-Bump Bug
+
+Due to a limitation in the `n8n-node release` command, minor and major releases will include an additional patch increment. This means:
+
+- **Patch release**: Works as expected (e.g., 1.0.0 → 1.0.1)
+- **Minor release**: Results in minor + patch (e.g., 1.0.0 → 1.1.1)
+- **Major release**: Results in major + patch (e.g., 1.0.0 → 2.0.1)
+
+This happens because the workflow manually bumps the version for minor/major releases, but `n8n-node release` applies an additional patch increment on top of the already bumped version.
+
+If you need precise semantic versioning, consider using `release-it` directly instead of `n8n-node release`.
 
 ## Troubleshooting
 
@@ -151,3 +169,19 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - Test locally with the same Node version: `nvm use 20.19` or `nvm use 22`
 - Run `npm ci` instead of `npm install` to match CI behavior
 - Check CI logs for specific error messages
+
+### Minor/Major releases result in unexpected version numbers
+
+**Cause**: Known bug in `n8n-node release` that adds an extra patch increment to manually bumped versions.
+
+**Expected behavior**:
+- Minor release: 1.0.0 → 1.1.0
+- Major release: 1.0.0 → 2.0.0
+
+**Actual behavior**:
+- Minor release: 1.0.0 → 1.1.1
+- Major release: 1.0.0 → 2.0.1
+
+**Solutions**:
+- This is expected behavior due to the bug. The version still increments the major/minor number as intended.
+- For precise semantic versioning, use `release-it` directly instead of `n8n-node release`.

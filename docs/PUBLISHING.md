@@ -265,6 +265,20 @@ After publishing, your node will appear in n8n's community node library. This us
 - Respond to user issues
 - Plan feature releases
 
+## Known Issues
+
+### n8n-node Release Double-Bump Bug
+
+Due to a limitation in the `n8n-node release` command, minor and major releases will include an additional patch increment. This means:
+
+- **Patch release**: Works as expected (e.g., 1.0.0 → 1.0.1)
+- **Minor release**: Results in minor + patch (e.g., 1.0.0 → 1.1.1)
+- **Major release**: Results in major + patch (e.g., 1.0.0 → 2.0.1)
+
+This happens because the workflow manually bumps the version for minor/major releases, but `n8n-node release` applies an additional patch increment on top of the already bumped version.
+
+If you need precise semantic versioning, consider using `release-it` directly instead of `n8n-node release`.
+
 ## Resources
 
 - [npm Publishing Guide](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-npm-registry)
