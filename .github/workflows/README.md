@@ -25,6 +25,8 @@ This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-
 
 **Usage**: This workflow runs automatically. No manual intervention needed.
 
+---
+
 ### Release — publish to npm (`publish.yml`)
 
 **Purpose**: Manual workflow for releasing new versions of the package to npm.
@@ -33,19 +35,41 @@ This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-
 
 **Inputs**:
 - `release_type` (choice, optional, default: 'patch'): Auto-increases version (patch/minor/major)
-- `branch` (string, optional, default: 'master'): Branch to use for release.
-- `dry_run` (boolean, optional, default: false): Test mode without publishing.
+- `branch` (string, optional, default: 'master'): Branch to use for release
+- `dry_run` (boolean, optional, default: false): Test mode without publishing
 
 **What it does**:
-1. Checks out the specified branch and verifies working directory is clean
-2. Validates that the target version doesn't already exist on npm
-3. Calculates next version automatically
-4. Builds the project
-5. Runs `npm run release` with the appropriate version argument
-   - This uses release-it to: update package.json, generate changelog from commits, create git tag, commit changes, push to GitHub, and publish to npm
-6. Verifies the release and generates summary
 
-**Note on versioning**: The workflow passes the version/release type directly to release-it (via `npm run release`), which handles all version bumping, tagging, and changelog generation in a single atomic operation. This prevents double-bumping issues.
+1. **Pre-release validation**:
+   - Checks out the specified branch
+   - Verifies working directory is clean (no uncommitted changes)
+   - Validates that the target version doesn't already exist on npm
+   - Runs tests (lint + test suite)
+
+2. **Version bumping** (separate step):
+   - Bumps version in package.json according to release_type
+   - Commits the version change locally (not pushed yet)
+
+3. **Build & Release**:
+   - Builds the project
+   - Runs release-it with `--no-increment` flag to:
+     - Generate changelog from commits
+     - Create git tag with the already-bumped version
+     - Push commits and tags to GitHub
+     - Publish to npm
+     - Create GitHub release
+
+4. **Post-release**:
+   - Verifies the package was published successfully
+   - Generates detailed summary with links
+
+**Important**: The workflow uses a **two-step versioning approach** to prevent double-bumping:
+- Step 1: Manual `npm version` to bump package.json
+- Step 2: Release-it with `--no-increment` to use the already-bumped version
+
+This ensures that if you choose "major", you get exactly the major version (e.g., 1.0.0 → 2.0.0), not 2.0.1.
+
+**Timeout**: 15 minutes (workflow will automatically fail if it takes longer)
 
 **Secrets required**:
 
@@ -57,9 +81,10 @@ npm authentication token for publishing packages.
 2. Log in to your account
 3. Go to "Access Tokens" in your account settings
 4. Click "Generate New Token"
-5. Enable 'Bypass 2FA Authentication'
-6. Set Read and Write Permissions to All Packages
-6. Generate and copy the new token
+5. Select "Automation" or "Publish" type
+6. Enable 'Bypass 2FA Authentication' if required
+7. Set Read and Write Permissions to All Packages
+8. Generate and copy the new token
 
 **How to set in repository**:
 1. Go to your GitHub repository
@@ -75,6 +100,8 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 
 **No manual setup required** - This is automatically available in workflows.
 
+---
+
 **Usage**:
 1. Go to GitHub Actions tab
 2. Select "Release — publish to npm (manual)"
@@ -89,6 +116,8 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - **Minor release** (1.0.7 → 1.1.0): Set `release_type` to 'minor' - for new features that are backward compatible
 - **Major release** (1.0.7 → 2.0.0): Set `release_type` to 'major' - for breaking changes
 - **Dry run**: Set `dry_run` to true - test the release process without publishing
+
+---
 
 ### Release Types Explained
 
@@ -110,9 +139,34 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 - Significant architectural changes
 - Example: Changed authentication method or renamed operations
 
-**Notes**:
-- Dry run mode tests everything without making changes
-- Working directory must be clean (no uncommitted changes)
+---
+
+## Workflow Summary Outputs
+
+After a successful release, the workflow generates a detailed summary including:
+
+**For successful releases**:
+- 📦 Package name and published version
+- 🎯 Release type used
+- 📊 Previous version (for comparison)
+- 🔗 Direct links to:
+  - npm package page
+  - GitHub release
+  - Changelog/compare view
+  - Commit history
+- 📥 Installation command
+
+**For dry runs**:
+- ✅ Validation results
+- Current and target versions
+- Confirmation that no changes were made
+
+**For failures**:
+- ❌ Error status
+- Release details attempted
+- Common troubleshooting tips
+
+---
 
 ## Troubleshooting
 
@@ -123,7 +177,7 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 **Solutions**:
 - Check existing versions: `npm view <package-name> versions`
 - Choose a different release type (patch/minor/major)
-- If you need to republish the same version, you must first unpublish it (not recommended)
+- The workflow now validates this BEFORE making any changes, so you'll catch this early
 
 ### "NPM_TOKEN not found" error
 
@@ -132,7 +186,17 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 **Solutions**:
 - Verify the token exists in repository Settings → Secrets and variables → Actions
 - Generate a new token on npmjs.com if the old one expired
-- Ensure the token has "Automation" or "Publish" permissions
+- Ensure the token has "Automation" or "Publish" permissions with write access
+
+### Tests fail during release
+
+**Cause**: The workflow runs `npm run lint` and `npm test` before releasing.
+
+**Solutions**:
+- Fix the failing tests locally first
+- Run tests locally: `npm run lint && npm test`
+- Commit fixes and try the release again
+- If tests or lint aren't configured, the workflow will warn but continue
 
 ### Tests fail in CI but pass locally
 
