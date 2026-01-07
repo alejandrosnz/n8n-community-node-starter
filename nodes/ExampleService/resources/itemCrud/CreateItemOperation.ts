@@ -59,9 +59,12 @@ export class CreateItemOperation {
     },
     send: {
       preSend: [
-        (request: any) => {
-          const { title, body, userId } = request.body;
-          request.body = { title, body, userId };
+        (request: Record<string, unknown>) => {
+          const body = request.body as { title: string; body?: string; userId: number };
+          if (!body.title || body.title.trim() === '') {
+            throw new Error('Title is required and cannot be empty');
+          }
+          request.body = { title: body.title, body: body.body, userId: body.userId };
           return request;
         },
       ],

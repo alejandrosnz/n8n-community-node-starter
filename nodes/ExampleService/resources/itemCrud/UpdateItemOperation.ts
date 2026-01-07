@@ -72,8 +72,8 @@ export class UpdateItemOperation {
     },
     send: {
       preSend: [
-        (request: any) => {
-          const { title, body, userId } = request.body;
+        (request: Record<string, unknown>) => {
+          const { title, body, userId } = request.body as { title?: string; body?: string; userId?: number };
           request.body = { title, body, userId };
           return request;
         },

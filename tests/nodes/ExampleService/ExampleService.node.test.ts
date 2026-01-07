@@ -14,7 +14,7 @@ describe('ExampleService', () => {
       expect(exampleService.description.name).toBe('exampleService');
       expect(exampleService.description.icon).toBe('file:example.svg');
       expect(exampleService.description.group).toEqual(['transform']);
-      expect(exampleService.description.version).toBe(1);
+      expect(exampleService.description.version).toEqual([1]);
       expect(exampleService.description.subtitle).toBe('={{ $parameter["operation"] + ": " + $parameter["resource"] }}');
       expect(exampleService.description.description).toBe('Interact with Example Service API (JSONPlaceholder)');
       expect(exampleService.description.defaults).toEqual({ name: 'Example Service' });

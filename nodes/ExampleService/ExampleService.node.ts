@@ -9,7 +9,7 @@ export class ExampleService implements INodeType {
     name: 'exampleService',
     icon: 'file:example.svg',
     group: ['transform'],
-    version: 1,
+    version: [1],
     subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
     description: 'Interact with Example Service API (JSONPlaceholder)',
     defaults: {

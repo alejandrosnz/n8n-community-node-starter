@@ -50,10 +50,10 @@ export class ListItemsOperation {
     },
     send: {
       preSend: [
-        (request: any) => {
+        (request: Record<string, unknown>) => {
           if (!request.query) request.query = {};
-          if (request.body.returnAll === false && request.body.limit) {
-            request.query._limit = request.body.limit;
+          if ((request.body as { returnAll: boolean }).returnAll === false && (request.body as { limit?: number }).limit) {
+            (request.query as Record<string, unknown>)._limit = (request.body as { limit: number }).limit;
           }
           return request;
         },
