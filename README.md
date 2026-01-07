@@ -85,7 +85,7 @@ Specialized prompts guide AI assistants to:
 
 ```bash
 # Fork this repository on GitHub first
-# Then clone YOUR fork (replace 'yourusername' with your GitHub username)
+# Then clone YOUR fork (replace 'yourusername' with your actual GitHub username)
 git clone https://github.com/yourusername/n8n-community-node-starter.git
 cd n8n-community-node-starter
 
@@ -158,13 +158,21 @@ npm run lint
 
 ### 4. Publish
 
+Once your node is ready, you can publish it to npm. This starter provides two release methods:
+
+#### Quick Local Release
 ```bash
-# Create a release
+# Create a release (patch/minor/major)
 npm run release
 
-# Or manually publish
+# Or manually publish (not recommended)
 npm publish
 ```
+
+#### Recommended: GitHub Actions Release
+For a more automated and reliable release process, use the GitHub Actions workflow. See the [CI/CD section](#cicd) below for detailed instructions.
+
+This method handles versioning, changelog generation, git tagging, and npm publishing automatically.
 
 ## Project Structure
 
@@ -286,9 +294,25 @@ npm test -- tests/nodes/ExampleService/ExampleService.node.test.ts
 This boilerplate includes GitHub Actions workflows for:
 
 - **CI**: Lint, type-check, test, and build on every PR
-- **Release**: Automated publishing on version tags
+- **Release**: Automated publishing on version tags OR manual releases via GitHub Actions
 
 ### Release Process
+
+You can release new versions in two ways:
+
+#### Option 1: Manual Release via GitHub Actions (Recommended)
+
+Use the "Release — publish to npm" workflow in GitHub Actions:
+
+1. Go to **Actions** tab in your GitHub repository
+2. Select **"Release — publish to npm (manual)"**
+3. Click **"Run workflow"**
+4. Choose release type (patch/minor/major) or specify custom version
+5. Click **"Run workflow"**
+
+This method handles versioning, changelog generation, git tagging, and npm publishing automatically.
+
+#### Option 2: Local Release
 
 ```bash
 # For patch release (1.0.0 -> 1.0.1)
@@ -300,6 +324,8 @@ npm run release -- --release-as minor
 # For major release (1.0.0 -> 2.0.0)
 npm run release -- --release-as major
 ```
+
+For detailed workflow documentation, see [.github/workflows/README.md](.github/workflows/README.md).
 
 ## Contributing
 
