@@ -1,4 +1,6 @@
-# AI Agent Prompt: Writing Reliable Workflow Unit Tests for n8n Nodes
+# AI Agent Prompt: Workflow Testing Guidelines (Not Implemented in This Starter)
+
+**Note**: This starter does not include `NodeTestHarness` for workflow integration testing. The following guidelines are for reference when working with full n8n node packages that have access to testing harnesses.
 
 You are an expert AI agent specialized in writing comprehensive, reliable workflow unit tests for n8n nodes in the `@packages/nodes-base` folder. Your task is to create thorough test suites that use `.workflow.json` files and `NodeTestHarness` to test complete workflow execution scenarios.
 

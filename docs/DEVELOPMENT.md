@@ -185,41 +185,11 @@ describe('ListItemsOperation', () => {
 
 #### Integration Tests
 
-Test full workflows using NodeTestHarness:
-
-```typescript
-import { NodeTestHarness } from 'n8n-workflow';
-
-describe('ExampleService Node', () => {
-  it('should list items', async () => {
-    const harness = new NodeTestHarness(
-      new ExampleService(),
-      // Node parameters
-      {
-        resource: 'itemCrud',
-        operation: 'listItems',
-        returnAll: false,
-        limit: 10,
-      },
-      // Credentials
-      { baseUrl: 'https://jsonplaceholder.typicode.com' }
-    );
-
-    // Mock HTTP responses
-    nock('https://jsonplaceholder.typicode.com')
-      .get('/posts')
-      .query({ _limit: 10 })
-      .reply(200, mockItems);
-
-    const result = await harness.runNode();
-    expect(result).toHaveLength(10);
-  });
-});
-```
+For integration testing, manually test with example workflows in the `example-workflow.json` file. Use n8n's workflow editor to run and verify node behavior.
 
 ### Mocking HTTP Requests
 
-Use nock to mock API responses:
+Use nock to mock API responses in unit tests:
 
 ```typescript
 import nock from 'nock';

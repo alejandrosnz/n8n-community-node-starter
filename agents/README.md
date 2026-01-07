@@ -20,16 +20,9 @@ The main **[AGENTS.md](../AGENTS.md)** file is located in the root of the projec
 - Error handling scenarios
 - Binary data testing patterns
 
-### [WORKFLOW_TESTING.md](WORKFLOW_TESTING.md)
-**Purpose**: Guide AI assistants in creating workflow-level integration tests
-- NodeTestHarness usage
-- Workflow JSON structure
-- HTTP mocking with nock
-- Multi-node workflow testing
-
 ### [QUICK_GUIDE.md](QUICK_GUIDE.md)
 **Purpose**: Quick reference for using AI to write tests
-- Two testing approaches (unit vs workflow)
+- Unit testing approaches
 - Credential schema specification
 - AI prompt templates
 

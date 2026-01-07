@@ -43,7 +43,6 @@ To start developing an n8n node:
 Specialized prompts for AI are in `agents/`:
 
 - **[UNIT_TESTING.md](./agents/UNIT_TESTING.md)** - Prompt for unit test development
-- **[WORKFLOW_TESTING.md](./agents/WORKFLOW_TESTING.md)** - Prompt for workflow test development
 - **[QUICK_GUIDE.md](./agents/QUICK_GUIDE.md)** - Quick guide for AI usage
 
 ## 🛠️ Recommended Development Workflow
@@ -54,9 +53,8 @@ graph TD
     B --> C[Create Node Structure]
     C --> D[Implement Operations]
     D --> E[Write Unit Tests]
-    E --> F[Write Workflow Tests]
-    F --> G[Manual Testing]
-    G --> H[Publish Node]
+    E --> F[Manual Testing]
+    F --> G[Publish Node]
 ```
 
 ## 📚 Additional Resources
@@ -85,6 +83,33 @@ Use `execute` function for custom logic.
 
 ### Declarative Nodes
 Use `requestDefaults` and routing configuration instead of `execute`.
+
+#### Advanced Routing for Multiple Operations
+For nodes with multiple operations, use a shared `routing` configuration with `preSend` to dynamically select operation-specific routing:
+
+```typescript
+routing: {
+  request: { method: 'GET', url: '/base' },
+  send: {
+    preSend: [
+      (request: IHttpRequestOptions) => {
+        const operation = (request.body as { operation: string }).operation;
+        switch (operation) {
+          case 'list':
+            return Promise.resolve({ ...request, ...ListOperation.Routing });
+          case 'create':
+            return Promise.resolve({ ...request, ...CreateOperation.Routing });
+          // ... other operations
+          default:
+            return Promise.resolve(request);
+        }
+      }
+    ]
+  }
+}
+```
+
+This pattern allows combining multiple operation routings into a single property definition.
 
 ### Trigger Nodes
 - **Webhook triggers**: Implement `webhook` and `webhookMethods` (checkExists, create, delete).
@@ -126,11 +151,6 @@ Nodes can test credentials via `methods.credentialTest`.
 - Mock all external dependencies
 - Test happy paths, error handling, edge cases, and binary data
 
-### Workflow Tests
-- Use `NodeTestHarness` with JSON workflow definitions
-- Mock external APIs with nock
-- Use `pnpm test` for running tests. Example: `cd packages/nodes-base/ && pnpm test TestFileName`
-
 ## Common Development Tasks
 
 ### Creating a New Node
@@ -162,6 +182,7 @@ Change parameter type to `'resourceLocator'`, define modes (list, id, url), add 
 ### Code Organization
 - Separate operation/field descriptions into separate files
 - Create reusable API request helpers in GenericFunctions
+- Use marker interfaces to categorize classes (e.g., `implements ExampleServiceN8nResource`)
 - Use kebab-case for files, PascalCase for classes
 
 ### UI/UX

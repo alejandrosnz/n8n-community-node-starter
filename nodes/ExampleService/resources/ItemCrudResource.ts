@@ -1,4 +1,4 @@
-import { INodeProperties, INodePropertyOptions } from "n8n-workflow";
+import { INodeProperties, INodePropertyOptions, IHttpRequestOptions } from "n8n-workflow";
 import {
   ListItemsOperation,
   GetItemOperation,
@@ -40,21 +40,21 @@ export class ItemCrudResource implements ExampleServiceN8nResource {
         },
         send: {
           preSend: [
-            (request: any) => {
-              const operation = request.body.operation;
+            (request: IHttpRequestOptions) => {
+              const operation = (request.body as { operation: string }).operation;
               switch (operation) {
                 case ListItemsOperation.OperationId:
-                  return { ...request, ...ListItemsOperation.Routing };
+                  return Promise.resolve({ ...request, ...ListItemsOperation.Routing });
                 case GetItemOperation.OperationId:
-                  return { ...request, ...GetItemOperation.Routing };
+                  return Promise.resolve({ ...request, ...GetItemOperation.Routing });
                 case CreateItemOperation.OperationId:
-                  return { ...request, ...CreateItemOperation.Routing };
+                  return Promise.resolve({ ...request, ...CreateItemOperation.Routing });
                 case UpdateItemOperation.OperationId:
-                  return { ...request, ...UpdateItemOperation.Routing };
+                  return Promise.resolve({ ...request, ...UpdateItemOperation.Routing });
                 case DeleteItemOperation.OperationId:
-                  return { ...request, ...DeleteItemOperation.Routing };
+                  return Promise.resolve({ ...request, ...DeleteItemOperation.Routing });
                 default:
-                  return request;
+                  return Promise.resolve(request);
               }
             },
           ],

@@ -199,7 +199,7 @@ Full TypeScript support with:
 
 ### Integration Tests
 
-- **Workflow testing**: Use NodeTestHarness for full workflows
+- **Workflow testing**: Manual testing with example workflows
 - **HTTP mocking**: nock for reliable API simulation
 - **Error scenarios**: Test failure conditions
 

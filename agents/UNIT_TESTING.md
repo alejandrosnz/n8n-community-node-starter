@@ -279,29 +279,7 @@ describe('Data Processing', () => {
 
 ## Advanced Testing Patterns
 
-### 1. Using NodeTestHarness for Integration Tests
-```typescript
-import { NodeTestHarness } from '@nodes-testing/node-test-harness';
-
-describe('Integration Tests', () => {
-  new NodeTestHarness().setupTests({
-    credentials: {
-      'testApi': { accessToken: 'test-token' }
-    },
-    nock: {
-      baseUrl: 'https://api.example.com',
-      mocks: [{
-        method: 'get',
-        path: '/users',
-        statusCode: 200,
-        responseBody: { users: [] }
-      }]
-    }
-  });
-});
-```
-
-### 2. Testing Node Methods and Properties
+### 1. Testing Node Methods and Properties
 ```typescript
 describe('Node Methods', () => {
   it('should have required methods defined', () => {
