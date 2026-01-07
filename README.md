@@ -72,8 +72,8 @@ Specialized prompts guide AI assistants to:
 
 ## 📚 Documentation
 
-- **[AGENTS.md](./docs/AGENTS.md)** - Complete guide for n8n node development with AI assistance
-- **[AI Prompts](./docs/ai-prompts/)** - Specialized prompts for AI-assisted development
+- **[AGENTS.md](./AGENTS.md)** - Complete guide for n8n node development with AI assistance
+- **[AI Prompts](./agents/)** - Specialized prompts for AI-assisted development
 - **[Agent Examples](./docs/AGENT_EXAMPLES.md)** - Concrete prompt examples for AI-assisted development
 - **[Architecture](./docs/ARCHITECTURE.md)** - Project structure and design patterns
 - **[Development](./docs/DEVELOPMENT.md)** - Setup and development workflow
@@ -186,8 +186,13 @@ This method handles versioning, changelog generation, git tagging, and npm publi
 ├── credentials/
 │   └── ExampleServiceApi.credentials.ts  # Authentication
 ├── tests/                         # Test files
-├── docs/                          # Documentation
-│   └── ai-prompts/                # AI development guides
+├── AGENTS.md                      # Development guide
+├── agents/                        # AI development guides
+├── docs/                          # Additional documentation
+│   ├── AGENT_EXAMPLES.md          # AI prompt examples
+│   ├── ARCHITECTURE.md            # Project structure
+│   ├── DEVELOPMENT.md             # Setup guide
+│   └── PUBLISHING.md              # Release guide
 ├── .github/
 │   └── workflows/                 # CI/CD pipelines
 ├── package.json                   # Node configuration
@@ -197,7 +202,7 @@ This method handles versioning, changelog generation, git tagging, and npm publi
 
 ## Using AI Agents for Development
 
-This boilerplate includes specialized prompts to help AI assistants create n8n nodes. See [docs/ai-prompts/](docs/ai-prompts/) for detailed guides and [docs/AGENT_EXAMPLES.md](docs/AGENT_EXAMPLES.md) for concrete examples.
+This boilerplate includes specialized prompts to help AI assistants create n8n nodes. See [agents/](agents/) for detailed guides and [docs/AGENT_EXAMPLES.md](docs/AGENT_EXAMPLES.md) for concrete examples.
 
 ### Example Prompt for AI
 

@@ -175,12 +175,12 @@ tests/nodes/ExampleService/ExampleService.workflow.test.ts
 
 ## Quick Reference
 
-| Task | Reference File | Key Elements |
-|------|----------------|--------------|
-| New Resource | `ItemCrudResource.ts` | Routing config, operation mapping |
-| CRUD Operations | `CreateItemOperation.ts` | Field definitions, HTTP config |
-| Authentication | `ExampleServiceApi.credentials.ts` | Auth properties, test block |
-| Unit Tests | `CreateItemOperation.test.ts` | Mock setup, assertion patterns |
-| Integration Tests | `ExampleService.node.test.ts` | NodeTestHarness usage |
+| Task              | Reference File                     | Key Elements                      |
+|-------------------|------------------------------------|-----------------------------------|
+| New Resource      | `ItemCrudResource.ts`              | Routing config, operation mapping |
+| CRUD Operations   | `CreateItemOperation.ts`           | Field definitions, HTTP config    |
+| Authentication    | `ExampleServiceApi.credentials.ts` | Auth properties, test block       |
+| Unit Tests        | `CreateItemOperation.test.ts`      | Mock setup, assertion patterns    |
+| Integration Tests | `ExampleService.node.test.ts`      | NodeTestHarness usage             |
 
-For more detailed guidance, see the specialized prompts in `docs/ai-prompts/`.
+For more detailed guidance, see the specialized prompts in `../agents/`.

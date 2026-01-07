@@ -7,7 +7,7 @@ This guide provides complete instructions for developing n8n community nodes usi
 To start developing an n8n node:
 
 1. **Read this complete guide** to understand the architecture
-2. **Use the AI prompts** in `docs/ai-prompts/` for automated assistance
+2. **Use the AI prompts** in `agents/` for automated assistance
 3. **Follow the best practices** documented here
 
 ## 📋 Guide Contents
@@ -18,33 +18,33 @@ To start developing an n8n node:
 - Parameters and configuration
 - Versioning and credentials
 
-### [Testing & QA](./ai-prompts/README.md)
-- **[Unit Testing](./ai-prompts/UNIT_TESTING.md)** - Unit tests with Jest
-- **[Workflow Testing](./ai-prompts/WORKFLOW_TESTING.md)** - Integration tests with workflows
-- **[Testing Quick Guide](./ai-prompts/QUICK_GUIDE.md)** - How to use AI to write tests
+### [Testing & QA](./agents/README.md)
+- **[Unit Testing](./agents/UNIT_TESTING.md)** - Unit tests with Jest
+- **[Workflow Testing](./agents/WORKFLOW_TESTING.md)** - Integration tests with workflows
+- **[Testing Quick Guide](./agents/QUICK_GUIDE.md)** - How to use AI to write tests
 
-### [Project Architecture](./ARCHITECTURE.md)
+### [Project Architecture](./docs/ARCHITECTURE.md)
 - Directory structure
 - Design patterns
 - Code best practices
 
-### [Development & Setup](./DEVELOPMENT.md)
+### [Development & Setup](./docs/DEVELOPMENT.md)
 - Environment setup
 - Development commands
 - Debugging and troubleshooting
 
-### [Publishing](./PUBLISHING.md)
+### [Publishing](./docs/PUBLISHING.md)
 - Preparation for publishing
 - Release process
 - Version maintenance
 
 ## 🤖 Available AI Prompts
 
-Specialized prompts for AI are in `docs/ai-prompts/`:
+Specialized prompts for AI are in `agents/`:
 
-- **[UNIT_TESTING.md](./ai-prompts/UNIT_TESTING.md)** - Prompt for unit test development
-- **[WORKFLOW_TESTING.md](./ai-prompts/WORKFLOW_TESTING.md)** - Prompt for workflow test development
-- **[QUICK_GUIDE.md](./ai-prompts/QUICK_GUIDE.md)** - Quick guide for AI usage
+- **[UNIT_TESTING.md](./agents/UNIT_TESTING.md)** - Prompt for unit test development
+- **[WORKFLOW_TESTING.md](./agents/WORKFLOW_TESTING.md)** - Prompt for workflow test development
+- **[QUICK_GUIDE.md](./agents/QUICK_GUIDE.md)** - Quick guide for AI usage
 
 ## 🛠️ Recommended Development Workflow
 
@@ -81,15 +81,15 @@ Every node implements the `INodeType` interface with:
 ## Node Types
 
 ### Programmatic Nodes
-Use `execute` function for custom logic. Example: `nodes/Discord/v2/DiscordV2.node.ts`
+Use `execute` function for custom logic.
 
 ### Declarative Nodes
-Use `requestDefaults` and routing configuration instead of `execute`. Example: `nodes/Okta/Okta.node.ts`
+Use `requestDefaults` and routing configuration instead of `execute`.
 
 ### Trigger Nodes
-- **Webhook triggers**: Implement `webhook` and `webhookMethods` (checkExists, create, delete). Example: `nodes/Microsoft/Teams/MicrosoftTeamsTrigger.node.ts`
-- **Polling triggers**: Set `polling: true` and implement `poll`. Use `getWorkflowStaticData('node')` to persist state. Example: `nodes/Google/Gmail/GmailTrigger.node.ts`
-- **Generic triggers**: Implement `trigger` function. Example: `nodes/MQTT/MqttTrigger.node.ts`
+- **Webhook triggers**: Implement `webhook` and `webhookMethods` (checkExists, create, delete).
+- **Polling triggers**: Set `polling: true` and implement `poll`. Use `getWorkflowStaticData('node')` to persist state.
+- **Generic triggers**: Implement `trigger` function.
 
 ## Node Parameters
 
@@ -105,7 +105,7 @@ Use `displayOptions` to show/hide fields based on other parameters. Use `noDataE
 ## Versioning
 
 - **Light versioning**: Use version arrays in description: `version: [3, 3.1, 3.2]`
-- **Full versioning**: Use `VersionedNodeType` class with separate version implementations. Example: `nodes/Set/Set.node.ts`
+- **Full versioning**: Use `VersionedNodeType` class with separate version implementations.
 
 ## Credentials
 
@@ -168,12 +168,3 @@ Change parameter type to `'resourceLocator'`, define modes (list, id, url), add 
 - Use clear `displayName` and `description` fields
 - Set sensible default values
 - Use `displayOptions` to show/hide fields conditionally
-
-## Example Nodes
-
-- Declarative: `nodes/Okta/Okta.node.ts`
-- Programmatic: `nodes/Discord/v2/DiscordV2.node.ts`
-- Webhook Trigger: `nodes/Microsoft/Teams/MicrosoftTeamsTrigger.node.ts`
-- Polling Trigger: `nodes/Google/Gmail/GmailTrigger.node.ts`
-- Generic Trigger: `nodes/MQTT/MqttTrigger.node.ts`
-- Versioned: `nodes/Set/Set.node.ts`

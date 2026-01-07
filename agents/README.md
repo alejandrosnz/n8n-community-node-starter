@@ -4,7 +4,12 @@ This directory contains specialized prompts designed to help AI assistants (like
 
 ## 📖 Main Documentation
 
-For a complete guide on n8n node development, see **[AGENTS.md](../AGENTS.md)** in the main documentation directory.
+The main **[AGENTS.md](../AGENTS.md)** file is located in the root of the project and serves as the comprehensive guide for developing n8n community nodes using AI assistance. It covers:
+- Node development architecture and best practices
+- Implementation patterns for different node types
+- Testing strategies and workflows
+- Publishing and maintenance guidelines
+- Integration with AI tools for automated development
 
 ## 🤖 Available Prompts
 
