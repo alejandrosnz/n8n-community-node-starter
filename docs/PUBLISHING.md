@@ -45,6 +45,8 @@ Follow n8n's naming convention:
 - Node name: `{yourServiceName}` (camelCase)
 - Credential name: `{yourServiceName}Api`
 
+**Important**: Choose a unique package name that you own on npm. Generic names like `n8n-nodes-starter` may already be taken or require special permissions. Consider using scoped packages (e.g., `@yourusername/n8n-nodes-your-service`) to avoid naming conflicts and ensure you have publish rights.
+
 ## Automated Releases with release-it
 
 This boilerplate includes automated release management.
@@ -190,15 +192,21 @@ npm run release -- --release-as 1.0.0-rc.1
 
 ### Common Issues
 
-1. **"You cannot publish over the previously published versions"**
+1. **"User [username] is not a collaborator for [package-name]"**
+   - The package name is already taken or you don't have publish rights
+   - Change the package name in `package.json` to a unique name you own
+   - Consider using scoped packages: `@yourusername/n8n-nodes-your-service`
+   - Verify your NPM_TOKEN is for the correct npm account
+
+2. **"You cannot publish over the previously published versions"**
    - Version already exists on npm
    - Use `npm version patch` to bump version
 
-2. **"Cannot publish with tag"**
+3. **"Cannot publish with tag"**
    - Check npm permissions
    - Verify token has publish rights
 
-3. **GitHub Actions failures**
+4. **GitHub Actions failures**
    - Check repository secrets
    - Verify workflow file syntax
    - Check branch protection rules
