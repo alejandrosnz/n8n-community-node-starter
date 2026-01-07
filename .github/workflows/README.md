@@ -32,15 +32,14 @@ This directory contains the GitHub Actions workflows for the n8n-nodes-markdown-
 **Triggers**: Manual (`workflow_dispatch`)
 
 **Inputs**:
-- `release_type` (choice, optional, default: 'patch'): Auto-increases version (patch/minor/major). Ignored if `custom_version` is set.
-- `custom_version` (string, optional): Specify exact version (e.g., 1.2.3 or 1.2.3-beta). If provided, `release_type` is ignored.
+- `release_type` (choice, optional, default: 'patch'): Auto-increases version (patch/minor/major)
 - `branch` (string, optional, default: 'master'): Branch to use for release.
 - `dry_run` (boolean, optional, default: false): Test mode without publishing.
 
 **What it does**:
 1. Checks out the specified branch and verifies working directory is clean
 2. Validates that the target version doesn't already exist on npm
-3. Calculates next version (auto or custom)
+3. Calculates next version automatically
 4. Builds the project
 5. Runs `npm run release` with the appropriate version argument
    - This uses release-it to: update package.json, generate changelog from commits, create git tag, commit changes, push to GitHub, and publish to npm
@@ -81,21 +80,37 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 2. Select "Release — publish to npm (manual)"
 3. Click "Run workflow"
 4. Fill in the inputs:
-   - For automatic versioning: Choose `release_type`
-   - For exact version: Enter `custom_version`
+   - Choose `release_type` (patch/minor/major)
    - Optionally change branch or enable dry_run
 5. Click "Run workflow"
 
 **Examples**:
-- Patch release (1.0.7 → 1.0.8): Leave defaults
-- Minor release (1.0.7 → 1.1.0): Set `release_type` to 'minor'
-- Major release (1.0.7 → 2.0.0): Set `release_type` to 'major'
-- Custom version: Set `custom_version` to '2.0.0' or '1.2.3-beta.1'
-- Dry run: Set `dry_run` to true
+- **Patch release** (1.0.7 → 1.0.8): Leave defaults - for bug fixes and small changes
+- **Minor release** (1.0.7 → 1.1.0): Set `release_type` to 'minor' - for new features that are backward compatible
+- **Major release** (1.0.7 → 2.0.0): Set `release_type` to 'major' - for breaking changes
+- **Dry run**: Set `dry_run` to true - test the release process without publishing
+
+### Release Types Explained
+
+**Patch Release (x.y.Z → x.y.Z+1)**:
+- Bug fixes and small improvements
+- No new features, no breaking changes
+- Safe to update automatically
+- Example: Fixed a typo in error messages
+
+**Minor Release (x.Y.z → x.Y+1.0)**:
+- New features that are backward compatible
+- API additions (but not removals)
+- Performance improvements
+- Example: Added a new optional parameter to an operation
+
+**Major Release (X.y.z → X+1.0.0)**:
+- Breaking changes to the API
+- Removed features or parameters
+- Significant architectural changes
+- Example: Changed authentication method or renamed operations
 
 **Notes**:
-- Custom versions must follow semver format (x.y.z or x.y.z-prerelease)
-- The workflow validates custom version format
 - Dry run mode tests everything without making changes
 - Working directory must be clean (no uncommitted changes)
 
@@ -107,7 +122,7 @@ GitHub token for repository access (automatically provided by GitHub Actions).
 
 **Solutions**:
 - Check existing versions: `npm view <package-name> versions`
-- Use `custom_version` input to specify the next available version
+- Choose a different release type (patch/minor/major)
 - If you need to republish the same version, you must first unpublish it (not recommended)
 
 ### "NPM_TOKEN not found" error

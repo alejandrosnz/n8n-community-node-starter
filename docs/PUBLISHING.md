@@ -82,10 +82,24 @@ npm run release -- --release-as minor
 
 # Major release (1.0.0 → 2.0.0)
 npm run release -- --release-as major
-
-# Pre-release (1.0.0 → 1.0.0-beta.1)
-npm run release -- --release-as 1.0.0-beta.1
 ```
+
+#### Release Types Explained
+
+**Patch Release (x.y.Z → x.y.Z+1)**:
+- **When to use**: Bug fixes, security patches, small improvements
+- **Examples**: Fixed error handling, corrected typos, performance optimizations
+- **Impact**: Safe for automatic updates, no breaking changes
+
+**Minor Release (x.Y.z → x.Y+1.0)**:
+- **When to use**: New features that maintain backward compatibility
+- **Examples**: Added new operation, new optional parameters, improved error messages
+- **Impact**: May include new functionality, but existing workflows continue working
+
+**Major Release (X.y.z → X+1.0.0)**:
+- **When to use**: Breaking changes, API modifications, significant updates
+- **Examples**: Removed operations, changed parameter names, authentication changes
+- **Impact**: May require workflow updates, breaking changes for existing users
 
 ### What Happens During Release
 
@@ -174,19 +188,29 @@ GITHUB_TOKEN=your_github_personal_access_token
 
 Follow [semver](https://semver.org/):
 
-- **MAJOR**: Breaking changes
-- **MINOR**: New features (backward compatible)
-- **PATCH**: Bug fixes (backward compatible)
+- **MAJOR** (X.y.z → X+1.0.0): Breaking changes - API modifications, removed features
+- **MINOR** (x.Y.z → x.Y+1.0): New features - backward compatible additions
+- **PATCH** (x.y.Z → x.y.Z+1): Bug fixes - backward compatible bug fixes
 
-### Pre-releases
+### Practical Examples
 
-```bash
-# Beta release
-npm run release -- --release-as 1.0.0-beta.1
+**When to use PATCH release:**
+- Fixed a bug in error handling
+- Corrected a typo in user-facing messages
+- Improved performance without changing behavior
+- Security fixes
 
-# Release candidate
-npm run release -- --release-as 1.0.0-rc.1
-```
+**When to use MINOR release:**
+- Added a new operation to an existing resource
+- Added optional parameters to existing operations
+- Improved error messages or logging
+- Enhanced validation without breaking existing workflows
+
+**When to use MAJOR release:**
+- Removed or renamed an operation
+- Changed required parameters
+- Modified authentication method
+- Significant API restructuring
 
 ## Troubleshooting
 

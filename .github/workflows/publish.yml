@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Choose release type (auto-increases version). Ignored if custom_version is set.'
+        description: 'Choose release type (auto-increases version)'
         required: false
         default: 'patch'
         type: choice
@@ -12,10 +12,6 @@ on:
           - patch
           - minor
           - major
-      custom_version:
-        description: 'Optional: Specify exact version (e.g., 1.2.3). If provided, release_type is ignored.'
-        required: false
-        type: string
       branch:
         description: 'Branch to use for release'
         required: false
@@ -101,26 +97,12 @@ jobs:
       - name: Calculate next version
         id: version
         run: |
-          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           CURRENT=$(node -p 'require("./package.json").version')
           
-          if [ -n "$CUSTOM_VERSION" ]; then
-            # Validate custom version format (basic semver check)
-            if ! echo "$CUSTOM_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$' > /dev/null; then
-              echo "❌ Invalid version format: $CUSTOM_VERSION"
-              echo "Expected format: x.y.z or x.y.z-prerelease"
-              exit 1
-            fi
-            
-            NEXT_VERSION="$CUSTOM_VERSION"
-            RELEASE_TYPE="custom"
-          else
-            RELEASE_TYPE="${{ github.event.inputs.release_type }}"
-            
-            # Install semver for proper version calculation
-            npm install -g semver
-            NEXT_VERSION=$(semver -i $RELEASE_TYPE $CURRENT)
-          fi
+          # Install semver for proper version calculation
+          npm install -g semver
+          NEXT_VERSION=$(semver -i $RELEASE_TYPE $CURRENT)
           
           echo "CURRENT_VERSION=$CURRENT" >> $GITHUB_OUTPUT
           echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
@@ -141,7 +123,7 @@ jobs:
           
           if npm view ${PACKAGE_NAME}@${NEXT_VERSION} version 2>/dev/null; then
             echo "❌ Error: Version ${NEXT_VERSION} already exists on npm"
-            echo "Please choose a different version or use a custom version."
+            echo "Please choose a different release type (patch/minor/major)."
             exit 1
           fi
           
@@ -184,16 +166,10 @@ jobs:
           npm run build || echo "Build step not found or failed"
           
           # Run release-it with the appropriate version
-          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
-          if [ -n "$CUSTOM_VERSION" ]; then
-            echo "📌 Using custom version: $CUSTOM_VERSION"
-            npm run release -- "$CUSTOM_VERSION"
-          else
-            echo "📌 Using release type: $RELEASE_TYPE"
-            npm run release -- "$RELEASE_TYPE"
-          fi
+          echo "📌 Using release type: $RELEASE_TYPE"
+          npm run release -- "$RELEASE_TYPE"
           
           echo ""
           echo "✅ Release completed!"
@@ -228,7 +204,6 @@ jobs:
         if: always()
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
-          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
           JOB_STATUS="${{ job.status }}"
           
           if [ "$DRY_RUN" = "true" ]; then
@@ -242,11 +217,7 @@ jobs:
             fi
             
             echo "" >> $GITHUB_STEP_SUMMARY
-            if [ -n "$CUSTOM_VERSION" ]; then
-              echo "**Custom version:** $CUSTOM_VERSION" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
             echo "**Current version:** ${{ steps.version.outputs.CURRENT_VERSION }}" >> $GITHUB_STEP_SUMMARY
             echo "**Would release:** ${{ steps.version.outputs.NEXT_VERSION }}" >> $GITHUB_STEP_SUMMARY
             echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
@@ -263,11 +234,7 @@ jobs:
             echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
             echo "| 📦 Package | \`${PACKAGE_NAME}\` |" >> $GITHUB_STEP_SUMMARY
             echo "| 🏷️ Version | \`${VERSION}\` |" >> $GITHUB_STEP_SUMMARY
-            if [ -n "$CUSTOM_VERSION" ]; then
-              echo "| 🎯 Type | Custom version |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| 🎯 Type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "| 🎯 Type | \`${{ github.event.inputs.release_type }}\` |" >> $GITHUB_STEP_SUMMARY
             echo "| 🌿 Branch | \`${{ github.event.inputs.branch }}\` |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
@@ -280,11 +247,7 @@ jobs:
             echo "# ❌ Release Failed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Status:** Failed" >> $GITHUB_STEP_SUMMARY
-            if [ -n "$CUSTOM_VERSION" ]; then
-              echo "**Attempted version:** $CUSTOM_VERSION" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "**Release type:** ${{ github.event.inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
             echo "**Current version:** ${{ steps.version.outputs.CURRENT_VERSION }}" >> $GITHUB_STEP_SUMMARY
             echo "**Branch:** ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY

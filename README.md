@@ -202,15 +202,20 @@ Use the automated workflow for reliable releases:
 #### Option 2: Quick Local Release
 
 ```bash
-# Patch release (1.0.0 -> 1.0.1)
+# Patch release (1.0.0 -> 1.0.1) - Bug fixes and small improvements
 npm run release
 
-# Minor release (1.0.0 -> 1.1.0)
+# Minor release (1.0.0 -> 1.1.0) - New features, backward compatible
 npm run release -- --release-as minor
 
-# Major release (1.0.0 -> 2.0.0)
+# Major release (1.0.0 -> 2.0.0) - Breaking changes
 npm run release -- --release-as major
 ```
+
+**Release Types Guide:**
+- **Patch**: Use for bug fixes, security patches, and small improvements that don't change functionality
+- **Minor**: Use for new features and enhancements that are backward compatible
+- **Major**: Use for breaking changes, API modifications, or significant updates that may affect existing workflows
 
 ---
 
