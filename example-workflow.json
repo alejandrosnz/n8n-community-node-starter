@@ -1,21 +1,35 @@
 {
-  "name": "Example Service Operations Demo",
+  "name": "My workflow",
   "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        304
+      ],
+      "id": "fba17206-277d-4e01-a180-4f6941c0ec1b",
+      "name": "When clicking ‘Execute workflow’"
+    },
     {
       "parameters": {
         "resource": "itemCrud",
         "operation": "listItems",
-        "returnAll": false,
-        "limit": 5
+        "requestOptions": {}
       },
-      "name": "List Items",
-      "type": "n8n-nodes-starter.exampleService",
+      "type": "CUSTOM.exampleService",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [
+        176,
+        -80
+      ],
+      "id": "98894a5f-ca82-47b8-b026-2233e3d6f959",
+      "name": "ListItems itemCrud",
       "credentials": {
         "exampleServiceApi": {
-          "id": "1",
-          "name": "Example Service API"
+          "id": "76iY96GO5Z2pS1zk",
+          "name": "Example Service account"
         }
       }
     },
@@ -23,16 +37,21 @@
       "parameters": {
         "resource": "itemCrud",
         "operation": "getItem",
-        "itemId": "1"
+        "itemId": "1",
+        "requestOptions": {}
       },
-      "name": "Get Item",
-      "type": "n8n-nodes-starter.exampleService",
+      "type": "CUSTOM.exampleService",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [
+        176,
+        112
+      ],
+      "id": "31468ddc-3295-449b-aa7a-5a3c13c33a27",
+      "name": "GetItem itemCrud",
       "credentials": {
         "exampleServiceApi": {
-          "id": "1",
-          "name": "Example Service API"
+          "id": "76iY96GO5Z2pS1zk",
+          "name": "Example Service account"
         }
       }
     },
@@ -40,18 +59,22 @@
       "parameters": {
         "resource": "itemCrud",
         "operation": "createItem",
-        "title": "New Example Item",
-        "body": "This is a new item created via the API",
-        "userId": 1
+        "title": "TEST",
+        "body": "Test item",
+        "requestOptions": {}
       },
-      "name": "Create Item",
-      "type": "n8n-nodes-starter.exampleService",
+      "type": "CUSTOM.exampleService",
       "typeVersion": 1,
-      "position": [680, 300],
+      "position": [
+        176,
+        304
+      ],
+      "id": "018c0ff5-c034-4a9a-9116-4c49f49bf66f",
+      "name": "CreateItem itemCrud",
       "credentials": {
         "exampleServiceApi": {
-          "id": "1",
-          "name": "Example Service API"
+          "id": "76iY96GO5Z2pS1zk",
+          "name": "Example Service account"
         }
       }
     },
@@ -60,18 +83,22 @@
         "resource": "itemCrud",
         "operation": "updateItem",
         "itemId": "1",
-        "title": "Updated Example Item",
-        "body": "This item has been updated",
-        "userId": 1
+        "title": "TEST",
+        "body": "Updated item",
+        "requestOptions": {}
       },
-      "name": "Update Item",
-      "type": "n8n-nodes-starter.exampleService",
+      "type": "CUSTOM.exampleService",
       "typeVersion": 1,
-      "position": [900, 300],
+      "position": [
+        176,
+        496
+      ],
+      "id": "7df38774-d61f-41cc-ae75-26452b82d179",
+      "name": "UpdateItem itemCrud",
       "credentials": {
         "exampleServiceApi": {
-          "id": "1",
-          "name": "Example Service API"
+          "id": "76iY96GO5Z2pS1zk",
+          "name": "Example Service account"
         }
       }
     },
@@ -79,21 +106,69 @@
       "parameters": {
         "resource": "itemCrud",
         "operation": "deleteItem",
-        "itemId": "1"
+        "itemId": "1",
+        "requestOptions": {}
       },
-      "name": "Delete Item",
-      "type": "n8n-nodes-starter.exampleService",
+      "type": "CUSTOM.exampleService",
       "typeVersion": 1,
-      "position": [1120, 300],
+      "position": [
+        176,
+        688
+      ],
+      "id": "25fe9fae-65c8-48c0-94d1-4b197b088fac",
+      "name": "DeleteItem itemCrud",
       "credentials": {
         "exampleServiceApi": {
-          "id": "1",
-          "name": "Example Service API"
+          "id": "76iY96GO5Z2pS1zk",
+          "name": "Example Service account"
         }
       }
     }
   ],
-  "connections": {},
-  "settings": {},
-  "staticData": null
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "ListItems itemCrud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GetItem itemCrud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CreateItem itemCrud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "UpdateItem itemCrud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DeleteItem itemCrud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "1f58f22e-4a4e-4b16-83db-5b311f28d38d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "de418e501bf89674ab9c4074f5c315fac72e6a5e9a84ca669315e1a91d4a9ee6"
+  },
+  "id": "p5ds4DVcbN-7jZv7MvwPO",
+  "tags": []
 }

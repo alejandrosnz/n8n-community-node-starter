@@ -5,7 +5,7 @@ import {
   CreateItemOperation,
   UpdateItemOperation,
   DeleteItemOperation,
-} from "./itemCrud";
+} from "./itemCrud/index";
 import { ExampleServiceN8nResource } from "../generic/ExampleServiceN8nResource";
 
 export class ItemCrudResource implements ExampleServiceN8nResource {

@@ -10,4 +10,12 @@ module.exports = {
     ],
     '@babel/preset-typescript',
   ],
+  plugins: [
+    [
+      'babel-plugin-add-import-extension',
+      {
+        extension: 'js',
+      },
+    ],
+  ],
 };

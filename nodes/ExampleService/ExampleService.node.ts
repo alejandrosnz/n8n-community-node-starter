@@ -1,7 +1,7 @@
 import { INodeType, INodeTypeDescription } from "n8n-workflow";
 import {
   ItemCrudResource,
-} from "./resources";
+} from "./resources/index";
 
 export class ExampleService implements INodeType {
   description: INodeTypeDescription = {

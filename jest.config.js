@@ -1,6 +1,5 @@
 export default {
-  preset: 'ts-jest/presets/default-esm',
-  extensionsToTreatAsEsm: ['.ts'],
+  preset: 'ts-jest',
   moduleNameMapper: {
     '^nodes/(.*)$': '<rootDir>/nodes/$1',
     '^credentials/(.*)$': '<rootDir>/credentials/$1',
@@ -9,7 +8,6 @@ export default {
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
-      useESM: true,
     }],
   },
 };
