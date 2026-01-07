@@ -1,54 +1,106 @@
 # n8n-community-node-starter
 
-A comprehensive boilerplate for creating n8n community nodes with TypeScript, CI/CD, and n8n Agents compatibility.
+**A production-ready boilerplate for building n8n community nodes with agentic-first development, comprehensive testing, and automated CI/CD.**
 
-## What is this repository?
+[![Build Status](https://github.com/yourusername/n8n-community-node-starter/workflows/CI/badge.svg)](https://github.com/yourusername/n8n-community-node-starter/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository serves as a **starting template** for building custom n8n community nodes. It provides:
+---
 
-- **Clean architecture** following n8n best practices
-- **Comprehensive testing** with Jest and nock
-- **CI/CD pipeline** with GitHub Actions
-- **Example implementation** using JSONPlaceholder API
-- **AI-assisted development** prompts and guides
+## The Problem with the Official Starter
+
+The official n8n-nodes-starter gets you started, but leaves you to figure out the hard parts:
+
+- **No testing setup** → Bugs slip into production
+- **No CI/CD guidance** → Manual, error-prone releases
+- **Minimal documentation** → Steep learning curve for newcomers
+- **No agentic IDE support** → Can't leverage modern AI coding assistants
+
+If you've struggled building your first community node, or spent hours debugging issues that tests would have caught, this starter is for you.
+
+---
+
+## The Solution: Agentic-First Development
+
+This starter is built for **modern development workflows**:
+
+✅ **Agentic IDE compatible** → Works seamlessly with Claude, Cursor, Windsurf, and other AI coding assistants  
+✅ **Comprehensive testing** → Catch bugs before they reach production  
+✅ **Automated CI/CD** → Tests run on every PR, safe merges to master  
+✅ **TypeScript-first** → Full type safety and IntelliSense  
+✅ **Best practices baked in** → Declarative architecture, proper routing patterns  
+✅ **Production-ready** → From zero to published node in hours, not days  
+
+---
 
 ## Why Choose This Starter?
 
-This starter enhances the official n8n-nodes-starter with key improvements for modern development:
+| Feature                  | Official Starter | n8n-community-node-starter |
+|--------------------------|------------------|----------------------------|
+| Testing Setup            | ❌ None          | ✅ Unit + Integration      |
+| Agentic IDE Support      | ❌ None          | ✅ AGENTS.md + sub-agents  |
+| CI/CD Pipeline           | ⚠️ Basic         | ✅ Tests + Auto-release    |
+| Documentation            | ⚠️ Minimal       | ✅ Comprehensive           |
+| Code Quality Tools       | ⚠️ Basic         | ✅ ESLint + Prettier       |
+| Example Implementation   | ⚠️ Hello World   | ✅ Real API (JSONPlaceholder) |
 
-| Feature       | Official Starter | This Starter              |
-|---------------|------------------|---------------------------|
-| Testing       | None             | ✅ Unit + Integration     |
-| AI Assistance | None             | ✅ Specialized prompts    |
-| Documentation | Basic            | ✅ Comprehensive          |
-| CI/CD         | Basic            | ✅ Test + Version Release |
+---
+
+## Agentic-First Development
+
+This starter is designed to work seamlessly with modern AI coding assistants like **Claude, Cursor, Windsurf, GitHub Copilot**, and more.
+
+### How It Works
+
+1. **`AGENTS.md`** → Complete development guide compatible with all modern agentic IDEs
+2. **`agents/` directory** → Specialized sub-agents for specific tasks:
+   - Test creation
+   - Workflow implementation
+
+### Development Flow
+
+```bash
+# 1. Reference AGENTS.md in your IDE
+# Claude Code, Cursor, Windsurf will automatically understand the project structure
+
+# 2. Ask your coding assistant to create operations
+"Create a new 'getUser' operation for the Users resource"
+
+# 3. Tests are generated automatically
+"Add comprehensive tests for the getUser operation"
+
+# 4. CI/CD catches issues before merge
+# Every PR runs: lint → test → build
+```
+
+**Result**: Faster development, fewer bugs, consistent code quality.
+
+---
 
 ## Features
 
-- ✅ **AI development prompts** for assisted coding
-- ✅ **Comprehensive testing** (unit + workflow tests)
-- ✅ **TypeScript-first** development
-- ✅ **Declarative node architecture** (no custom `execute` functions)
-- ✅ **Resource/Operation pattern** for scalable node design
-- ✅ **GitHub Actions CI/CD** (lint, test, build, release)
-- ✅ **Easy releases** with GitHub Actions
-- ✅ **ESLint + Prettier** code quality tools
+- 🤖 **Agentic-first architecture** – AGENTS.md + specialized sub-agents for AI coding assistants
+- ✅ **Comprehensive testing** – Unit tests + workflow integration tests with Jest and nock
+- 🔄 **Automated CI/CD** – GitHub Actions pipeline: lint → test → build → release
+- 🛡️ **Type-safe development** – Full TypeScript support with strict checking
+- 📐 **Declarative node pattern** – No custom `execute()` functions, uses routing configuration
+- 🎯 **Resource/Operation structure** – Scalable, maintainable node architecture
+- 🚀 **Easy releases** – Automated versioning and npm publishing via GitHub Actions
+- 🎨 **Code quality tools** – ESLint + Prettier pre-configured
+- 📚 **Comprehensive docs** – Architecture, development, and publishing guides
 
-## AI-First Development
-
-Specialized prompts and AGENTS.md files for AI-Agentic IDEs to:
-- Generate properly structured operations
-- Create comprehensive tests automatically
-- Follow n8n best practices
+---
 
 ## 📚 Documentation
 
-- **[AGENTS.md](./AGENTS.md)** - Complete guide for n8n node development with AI assistance
-- **[AI Prompts](./agents/)** - Specialized prompts for AI-assisted development
-- **[Agent Examples](./docs/AGENT_EXAMPLES.md)** - Concrete prompt examples for AI-assisted development
-- **[Architecture](./docs/ARCHITECTURE.md)** - Project structure and design patterns
-- **[Development](./docs/DEVELOPMENT.md)** - Setup and development workflow
-- **[Publishing](./docs/PUBLISHING.md)** - Release and publishing guide
+- **[AGENTS.md](./AGENTS.md)** – Complete guide for agentic-first n8n development
+- **[AI Agents](./agents/)** – Specialized sub-agents for specific development tasks
+- **[Agent Examples](./docs/AGENT_EXAMPLES.md)** – Concrete prompt examples for AI-assisted development
+- **[Architecture](./docs/ARCHITECTURE.md)** – Project structure and design patterns
+- **[Development](./docs/DEVELOPMENT.md)** – Setup and development workflow
+- **[Publishing](./docs/PUBLISHING.md)** – Release and publishing guide
+
+---
 
 ## 🚀 Quick Start
 
@@ -72,7 +124,7 @@ npm install
 # Build the project
 npm run build
 
-# Run tests
+# Run tests to verify setup
 npm test
 ```
 
@@ -92,7 +144,7 @@ Edit the following files to adapt the boilerplate to your API:
     "email": "your.email@example.com"
   },
   "repository": {
-    "url": "https://github.com/alejandrosnz/n8n-nodes-your-api.git"
+    "url": "https://github.com/yourusername/n8n-nodes-your-api.git"
   }
 }
 ```
@@ -125,86 +177,77 @@ Edit the following files to adapt the boilerplate to your API:
 # Run tests
 npm test
 
+# Run with coverage
+npm run test:coverage
+
 # Build and lint
 npm run build
 npm run lint
-
-# Test in n8n (link your local development)
-# Follow the development docs below
 ```
 
 ### 4. Publish
 
-Once your node is ready, you can publish it to npm. This starter provides two release methods:
+Once your node is ready, publish it to npm. This starter provides two release methods:
 
-#### Quick Local Release
+#### Option 1: GitHub Actions Release (Recommended)
+
+Use the automated workflow for reliable releases:
+
+1. Go to **Actions** tab in your GitHub repository
+2. Select **"Release — publish to npm (manual)"**
+3. Click **"Run workflow"**
+4. Choose release type (patch/minor/major)
+5. Workflow handles: versioning, changelog, git tagging, npm publishing
+
+#### Option 2: Quick Local Release
+
 ```bash
-# Create a release (patch/minor/major)
+# Patch release (1.0.0 -> 1.0.1)
 npm run release
 
-# Or manually publish (not recommended)
-npm publish
+# Minor release (1.0.0 -> 1.1.0)
+npm run release -- --release-as minor
+
+# Major release (1.0.0 -> 2.0.0)
+npm run release -- --release-as major
 ```
 
-#### Recommended: GitHub Actions Release
-For a more automated and reliable release process, use the GitHub Actions workflow. See the [CI/CD section](#cicd) below for detailed instructions.
-
-This method handles versioning, changelog generation, git tagging, and npm publishing automatically.
+---
 
 ## Project Structure
 
 ```
 ├── nodes/
-│   └── ExampleService/           # Example node implementation
-│       ├── ExampleService.node.ts    # Main node definition
-│       ├── example.svg               # Node icon
-│       ├── generic/                  # Type definitions
-│       └── resources/                # API operations
+│   └── ExampleService/              # Example node implementation
+│       ├── ExampleService.node.ts   # Main node definition
+│       ├── example.svg              # Node icon
+│       ├── generic/                 # Type definitions
+│       └── resources/               # API operations
 ├── credentials/
 │   └── ExampleServiceApi.credentials.ts  # Authentication
-├── tests/                         # Test files
-├── AGENTS.md                      # Development guide
-├── agents/                        # AI development guides
-├── docs/                          # Additional documentation
-│   ├── AGENT_EXAMPLES.md          # AI prompt examples
-│   ├── ARCHITECTURE.md            # Project structure
-│   ├── DEVELOPMENT.md             # Setup guide
-│   └── PUBLISHING.md              # Release guide
+├── tests/                           # Test files
+│   ├── nodes/                       # Node tests
+│   └── workflows/                   # Integration tests
+├── agents/                          # Agentic IDE sub-agents
+│   ├── operation-generator.md       # Operation creation guide
+│   ├── test-generator.md            # Test creation guide
+│   └── ...                          # Other specialized agents
+├── docs/                            # Documentation
+│   ├── AGENT_EXAMPLES.md            # AI prompt examples
+│   ├── ARCHITECTURE.md              # Project structure guide
+│   ├── DEVELOPMENT.md               # Development setup
+│   └── PUBLISHING.md                # Release guide
 ├── .github/
-│   └── workflows/                 # CI/CD pipelines
-├── package.json                   # Node configuration
-├── tsconfig.json                  # TypeScript config
-└── README.md                      # This file
+│   └── workflows/                   # CI/CD pipelines
+│       ├── ci.yml                   # Test on every PR
+│       └── release.yml              # Automated publishing
+├── AGENTS.md                        # Main agentic development guide
+├── package.json                     # Node configuration
+├── tsconfig.json                    # TypeScript config
+└── README.md                        # This file
 ```
 
-## Using AI Agents for Development
-
-This boilerplate includes specialized prompts to help AI assistants create n8n nodes. See [agents/](agents/) for detailed guides and [docs/AGENT_EXAMPLES.md](docs/AGENT_EXAMPLES.md) for concrete examples.
-
-### Example Prompt for AI
-
-<details>
-<summary>Click to see an example agent prompt</summary>
-
-```
-I need to create a new n8n node for the GitHub API. I want to implement:
-- List repositories
-- Get repository details
-- Create issues
-- List pull requests
-
-Please use this boilerplate structure and help me:
-1. Update the credentials for GitHub API token auth
-2. Create the repository resource with CRUD operations
-3. Set up proper routing for each endpoint
-4. Add comprehensive tests
-
-Base it on the existing ExampleService structure in this n8n-community-node-starter.
-```
-
-</details>
-
-For more examples, see [Agent Examples](docs/AGENT_EXAMPLES.md).
+---
 
 ## 🛠️ Development
 
@@ -219,24 +262,30 @@ For more examples, see [Agent Examples](docs/AGENT_EXAMPLES.md).
    npm install
    ```
 
-2. **Link to local n8n**:
+2. **Link to local n8n** for testing:
    ```bash
-   # In your n8n installation
-   npm link /path/to/this/boilerplate
+   # In this project directory
+   npm run build
+   npm link
 
-   # Or use n8n's community node loading
+   # In your n8n installation directory
+   npm link n8n-nodes-your-api
    ```
 
 3. **Development workflow**:
    ```bash
-   # Watch mode
+   # Watch mode (auto-rebuild on changes)
    npm run dev
 
-   # Test changes
+   # Run tests
    npm test
 
-   # Build
+   # Full build
    npm run build
+
+   # Lint and format
+   npm run lint
+   npm run format
    ```
 
 ### Architecture Overview
@@ -245,10 +294,12 @@ This boilerplate follows n8n's recommended patterns:
 
 - **Declarative nodes**: No `execute()` functions, uses routing configuration
 - **Resource/Operation separation**: Clean organization of API endpoints
-- **TypeScript throughout**: Full type safety
-- **Agent-compatible**: `usableAsTool: true` for AI workflows
+- **TypeScript throughout**: Full type safety and IntelliSense
+- **Test-driven**: Unit tests + workflow integration tests
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed explanations.
+
+---
 
 ## Testing
 
@@ -258,71 +309,162 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed explanations.
 # Run all tests
 npm test
 
-# Run with coverage
+# Run with coverage report
 npm run test:coverage
 
-# Run specific test
+# Run specific test file
 npm test -- tests/nodes/ExampleService/ExampleService.node.test.ts
+
+# Watch mode (re-run on changes)
+npm test -- --watch
 ```
 
 ### Test Structure
 
-- **Unit tests**: Test individual operations and routing
+- **Unit tests**: Test individual operations, routing, and functions
 - **Integration tests**: Test full workflows with NodeTestHarness
-- **Mocking**: Uses nock for HTTP request mocking
+- **HTTP mocking**: Uses nock to mock API responses
+- **Coverage**: Enforced minimum coverage thresholds
+
+Example test output:
+```
+✓ ExampleService node tests
+  ✓ should load node properties correctly
+  ✓ should have correct credentials
+  ✓ should route GET requests correctly
+  ✓ should handle errors gracefully
+
+✓ Workflow tests
+  ✓ should execute getAll operation successfully
+  ✓ should create item with correct payload
+```
+
+---
 
 ## CI/CD
 
-This boilerplate includes GitHub Actions workflows for:
+This starter includes GitHub Actions workflows that ensure code quality and automate releases:
 
-- **CI**: Lint, type-check, test, and build on every PR
-- **Release**: Automated publishing on version tags OR manual releases via GitHub Actions
+### Continuous Integration (CI)
 
-### Release Process
+**Triggers**: Every push and pull request
 
-You can release new versions in two ways:
+**Pipeline**:
+1. ✅ **Lint** – ESLint checks code quality
+2. ✅ **Type-check** – TypeScript validates types
+3. ✅ **Test** – Jest runs all tests
+4. ✅ **Build** – Compiles TypeScript to JavaScript
 
-#### Option 1: Manual Release via GitHub Actions (Recommended)
+**Benefit**: Bugs are caught before merging to master. Every PR must pass all checks.
 
-Use the "Release — publish to npm" workflow in GitHub Actions:
+### Automated Release
 
-1. Go to **Actions** tab in your GitHub repository
-2. Select **"Release — publish to npm (manual)"**
-3. Click **"Run workflow"**
-4. Choose release type (patch/minor/major) or specify custom version
-5. Click **"Run workflow"**
+**Triggers**: Manual workflow dispatch or version tags
 
-This method handles versioning, changelog generation, git tagging, and npm publishing automatically.
+**Two release methods**:
 
-#### Option 2: Local Release
+#### Method 1: GitHub Actions (Recommended)
+
+1. Go to **Actions** → **"Release — publish to npm (manual)"**
+2. Click **"Run workflow"**
+3. Select version bump type (patch/minor/major)
+4. Workflow automatically:
+   - Updates version in `package.json`
+   - Generates changelog
+   - Creates git tag
+   - Publishes to npm
+
+#### Method 2: Local Release
 
 ```bash
-# For patch release (1.0.0 -> 1.0.1)
-npm run release
-
-# For minor release (1.0.0 -> 1.1.0)
-npm run release -- --release-as minor
-
-# For major release (1.0.0 -> 2.0.0)
-npm run release -- --release-as major
+npm run release              # Patch version
+npm run release -- --release-as minor  # Minor version
+npm run release -- --release-as major  # Major version
 ```
 
 For detailed workflow documentation, see [.github/workflows/README.md](.github/workflows/README.md).
 
+---
+
+## Using Agentic IDEs for Development
+
+This starter is optimized for AI-assisted development. Here's how to leverage it:
+
+### Step 1: Open AGENTS.md in Your IDE
+
+Claude Code, Cursor, Windsurf, and other agentic IDEs will automatically detect and use this file as context.
+
+### Step 2: Use Specialized Sub-Agents
+
+Ask your coding assistant to reference specific agents for targeted tasks:
+
+```
+"Using the operation-generator agent, create a new 'updateUser' operation
+for the Users resource with fields: name, email, role"
+```
+
+```
+"Using the test-generator agent, create comprehensive tests for the
+getUserById operation including error cases"
+```
+
+### Step 3: Let CI/CD Verify
+
+Push your changes and let GitHub Actions validate:
+- Linting
+- Type checking
+- All tests pass
+- Build succeeds
+
+### Example Prompts
+
+See [docs/AGENT_EXAMPLES.md](docs/AGENT_EXAMPLES.md) for complete examples, including:
+- Creating new resources
+- Adding operations
+- Writing tests
+- Implementing error handling
+- Setting up authentication
+
+---
+
 ## Contributing
 
+Contributions are welcome! Here's how:
+
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Add tests
-5. Submit a pull request
+4. Add tests for new functionality
+5. Ensure all tests pass (`npm test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+**Note**: All PRs must pass CI checks (lint, test, build) before merging.
+
+---
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file.
 
-## Links
+---
 
-- [n8n Documentation](https://docs.n8n.io/)
-- [Community Nodes Guide](https://docs.n8n.io/integrations/community-nodes/)
-- [n8n Agents](https://docs.n8n.io/workflows/components/agents/)
+## Links & Resources
+
+- **[n8n Documentation](https://docs.n8n.io/)** – Official n8n docs
+- **[Community Nodes Guide](https://docs.n8n.io/integrations/community-nodes/)** – How to publish your node
+- **[n8n GitHub](https://github.com/n8n-io/n8n)** – n8n source code
+- **[JSONPlaceholder API](https://jsonplaceholder.typicode.com/)** – Example API used in this starter
+
+---
+
+## Support
+
+- 🐛 **Found a bug?** [Open an issue](https://github.com/yourusername/n8n-community-node-starter/issues)
+- 💡 **Have a feature request?** [Start a discussion](https://github.com/yourusername/n8n-community-node-starter/discussions)
+- 📧 **Need help?** Check the [docs/](docs/) directory or open an issue
+
+---
+
+**Built with ❤️ for the n8n community**
