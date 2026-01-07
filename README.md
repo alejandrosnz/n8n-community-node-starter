@@ -2,7 +2,7 @@
 
 **A production-ready boilerplate for building n8n community nodes with agentic-first development, comprehensive testing, and automated CI/CD.**
 
-[![Build Status](https://github.com/yourusername/n8n-community-node-starter/workflows/CI/badge.svg)](https://github.com/yourusername/n8n-community-node-starter/actions)
+[![CI — test](https://github.com/alejandrosnz/n8n-community-node-starter/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/alejandrosnz/n8n-community-node-starter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
