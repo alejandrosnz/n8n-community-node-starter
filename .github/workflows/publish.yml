@@ -164,16 +164,12 @@ jobs:
           # Revert changes
           git checkout -- package.json package-lock.json 2>/dev/null || git checkout -- package.json
 
-      - name: Prepare version for non-patch releases
+      - name: Bump version for non-patch releases
         if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.release_type != 'patch' }}
         run: |
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
-          echo "📌 Pre-bumping $RELEASE_TYPE version..."
-          echo "Note: n8n-node release only does patch bumps by default"
-          echo "For minor/major releases, we bump manually first"
-          echo ""
-          
+          echo "📌 Bumping $RELEASE_TYPE version..."
           npm version $RELEASE_TYPE --no-git-tag-version
           
           NEW_VERSION=$(node -p 'require("./package.json").version')
@@ -183,9 +179,8 @@ jobs:
           git add package.json package-lock.json 2>/dev/null || git add package.json
           git commit -m "chore: bump version to $NEW_VERSION"
           
-          echo "✅ Version bump committed locally"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-        id: prebump
+          echo "BUMPED_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        id: bump
 
       - name: Run release
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -199,21 +194,23 @@ jobs:
           CURRENT_VERSION=$(node -p 'require("./package.json").version')
           RELEASE_TYPE="${{ github.event.inputs.release_type }}"
           
-          echo "Version in package.json: $CURRENT_VERSION"
+          echo "Current version: $CURRENT_VERSION"
           echo "Release type: $RELEASE_TYPE"
           echo ""
           
-          # n8n-node release internally calls release-it
-          # It will:
-          # - For patch: bump version automatically
-          # - For minor/major (already bumped): detect existing version change and skip bump
-          # - Build the project
-          # - Generate changelog
-          # - Create git tag
-          # - Push to GitHub
-          # - Publish to npm
+          # Build the project first
+          echo "Building project..."
+          npm run build
+          echo ""
           
-          npm run release
+          # Use release-it directly with explicit control
+          if [ "$RELEASE_TYPE" = "patch" ]; then
+            echo "Running release-it with patch bump..."
+            npx release-it patch --ci
+          else
+            echo "Running release-it with --no-increment (version already bumped to $CURRENT_VERSION)..."
+            npx release-it --no-increment --ci
+          fi
           
           echo ""
           echo "✅ Release completed!"
