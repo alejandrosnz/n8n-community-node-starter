@@ -7,8 +7,6 @@ A comprehensive boilerplate for creating n8n community nodes with TypeScript, CI
 This repository serves as a **starting template** for building custom n8n community nodes. It provides:
 
 - **Clean architecture** following n8n best practices
-- **TypeScript support** with proper type definitions
-- **n8n Agents compatibility** for AI-assisted workflows
 - **Comprehensive testing** with Jest and nock
 - **CI/CD pipeline** with GitHub Actions
 - **Example implementation** using JSONPlaceholder API
@@ -16,56 +14,29 @@ This repository serves as a **starting template** for building custom n8n commun
 
 ## Why Choose This Starter?
 
-This starter is designed to be **better than the official n8n starter** in every way:
+This starter enhances the official n8n-nodes-starter with key improvements for modern development:
 
-| Feature | Official Starter | This Starter |
-|---------|------------------|--------------|
-| Architecture | Programmatic | ✅ Declarative |
-| Testing | None | ✅ Unit + Integration |
-| CI/CD | None | ✅ GitHub Actions |
-| AI Assistance | None | ✅ Specialized prompts |
-| Example Code | Minimal | ✅ Complete CRUD |
-| Documentation | Basic | ✅ Comprehensive |
-| Agent Ready | No | ✅ 100% Compatible |
+| Feature       | Official Starter | This Starter              |
+|---------------|------------------|---------------------------|
+| Testing       | None             | ✅ Unit + Integration     |
+| AI Assistance | None             | ✅ Specialized prompts    |
+| Documentation | Basic            | ✅ Comprehensive          |
+| CI/CD         | Basic            | ✅ Test + Version Release |
 
 ## Features
 
+- ✅ **AI development prompts** for assisted coding
+- ✅ **Comprehensive testing** (unit + workflow tests)
 - ✅ **TypeScript-first** development
-- ✅ **n8n Agents compatible** (`usableAsTool: true`)
 - ✅ **Declarative node architecture** (no custom `execute` functions)
 - ✅ **Resource/Operation pattern** for scalable node design
-- ✅ **Comprehensive testing** (unit + workflow tests)
 - ✅ **GitHub Actions CI/CD** (lint, test, build, release)
+- ✅ **Easy releases** with GitHub Actions
 - ✅ **ESLint + Prettier** code quality tools
-- ✅ **Automated releases** with release-it
-- ✅ **AI development prompts** for assisted coding
 
-## How It Works
+## AI-First Development
 
-### Declarative Node Architecture
-
-This starter uses **declarative routing** instead of custom execute functions:
-- **No boilerplate code**: Define operations as configuration
-- **Automatic HTTP handling**: n8n manages requests/responses
-- **Better maintainability**: Changes are configuration, not code
-
-### Resource/Operation Pattern
-
-Operations are organized in a scalable hierarchy:
-```
-YourNode
-├── Resource 1 (e.g., "Users")
-│   ├── Create User
-│   ├── Get User
-│   └── Update User
-└── Resource 2 (e.g., "Posts")
-    ├── List Posts
-    └── Delete Post
-```
-
-### AI-First Development
-
-Specialized prompts guide AI assistants to:
+Specialized prompts and AGENTS.md files for AI-Agentic IDEs to:
 - Generate properly structured operations
 - Create comprehensive tests automatically
 - Follow n8n best practices
@@ -79,7 +50,13 @@ Specialized prompts guide AI assistants to:
 - **[Development](./docs/DEVELOPMENT.md)** - Setup and development workflow
 - **[Publishing](./docs/PUBLISHING.md)** - Release and publishing guide
 
-## Quick Start
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js v22 or later
+- Basic knowledge of n8n and TypeScript
+- A GitHub account for forking the repository
 
 ### 1. Fork and Setup
 
@@ -229,7 +206,7 @@ Base it on the existing ExampleService structure in this n8n-community-node-star
 
 For more examples, see [Agent Examples](docs/AGENT_EXAMPLES.md).
 
-## Development
+## 🛠️ Development
 
 ### Local Development Setup
 
