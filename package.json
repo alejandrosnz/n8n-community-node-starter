@@ -13,12 +13,15 @@
   "license": "MIT",
   "homepage": "https://github.com/alejandrosnz/n8n-community-node-starter",
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com"
+    "name": "Alejandro Sanz",
+    "email": "your-email@example.com"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alejandrosnz/n8n-community-node-starter.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=20.15"
