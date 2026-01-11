@@ -1,71 +1,370 @@
-# AGENTS.md - Guide for n8n Node Development
+# AGENTS.md - Instructions for AI Coding Agents
 
-This guide provides complete instructions for developing n8n community nodes using AI (GitHub Copilot, Cursor, Claude, etc.).
+> **Important**: You are working with an n8n community node starter template. Follow these instructions carefully to avoid common mistakes.
 
-## 🚀 Quick Start
+## 🎯 Your Mission
 
-To start developing an n8n node:
+When asked to create a new n8n node, you must:
 
-1. **Read this complete guide** to understand the architecture
-2. **Use the AI prompts** in `agents/` for automated assistance
-3. **Follow the best practices** documented here
+1. **REPLACE** the example node, don't add alongside it
+2. **UPDATE** all configuration files with the new service name
+3. **REGENERATE** documentation using README_TEMPLATE.md
+4. **MAINTAIN** the project structure and conventions
 
-## 📋 Guide Contents
+## ⚠️ Common Mistakes to AVOID
 
-### [Node Development](./AGENTS.md#node-structure)
-- Basic node structure
-- Node types (Programmatic, Declarative, Triggers)
-- Parameters and configuration
-- Versioning and credentials
+- ❌ Creating new nodes without removing `nodes/Example/`
+- ❌ Forgetting to update `package.json` with new node name
+- ❌ Not regenerating README.md from README_TEMPLATE.md
+- ❌ Using generic names like "Example" in final code
+- ❌ Breaking the directory structure
 
-### [Testing & QA](./agents/README.md)
-- **[Unit Testing](./agents/UNIT_TESTING.md)** - Unit tests with Jest
-- **[Workflow Testing](./agents/WORKFLOW_TESTING.md)** - Integration tests with workflows
-- **[Testing Quick Guide](./agents/QUICK_GUIDE.md)** - How to use AI to write tests
+## 📋 Step-by-Step Workflow
 
-### [Project Architecture](./docs/ARCHITECTURE.md)
-- Directory structure
-- Design patterns
-- Code best practices
+### Step 1: Understand the Request
 
-### [Development & Setup](./docs/DEVELOPMENT.md)
-- Environment setup
-- Development commands
-- Debugging and troubleshooting
+Ask clarifying questions if needed:
+- What is the service/API name?
+- What operations should the node support?
+- Does it need credentials? What type (API key, OAuth, etc.)?
+- Any specific requirements?
 
-### [Publishing](./docs/PUBLISHING.md)
-- Preparation for publishing
-- Release process
-- Version maintenance
+### Step 2: Clean Up Example Node
 
-## 🤖 Available AI Prompts
-
-Specialized prompts for AI are in `agents/`:
-
-- **[UNIT_TESTING.md](./agents/UNIT_TESTING.md)** - Prompt for unit test development
-- **[QUICK_GUIDE.md](./agents/QUICK_GUIDE.md)** - Quick guide for AI usage
-
-## 🛠️ Recommended Development Workflow
-
-```mermaid
-graph TD
-    A[Plan Your API] --> B[Configure Credentials]
-    B --> C[Create Node Structure]
-    C --> D[Implement Operations]
-    D --> E[Write Unit Tests]
-    E --> F[Manual Testing]
-    F --> G[Publish Node]
+```bash
+# Remove the example node completely
+rm -rf nodes/Example/
+rm -rf credentials/ExampleApi.credentials.ts
+rm -rf __tests__/nodes/Example/
 ```
 
-## 📚 Additional Resources
+### Step 3: Create New Node Structure
 
-- [Official n8n Documentation](https://docs.n8n.io/)
-- [Community Nodes Guide](https://docs.n8n.io/integrations/community-nodes/)
-- [API Reference](https://docs.n8n.io/api/)
+```
+nodes/
+  └── [ServiceName]/
+      ├── [ServiceName].node.ts
+      ├── [ServiceName].node.json (optional, for declarative)
+      ├── icon.svg
+      └── descriptions/
+          ├── [Resource1]Description.ts
+          └── [Resource2]Description.ts
+```
+
+### Step 4: Update package.json
+
+**CRITICAL**: Update these fields in `package.json`:
+
+```json
+{
+  "name": "n8n-nodes-[servicename]",
+  "version": "0.1.0",
+  "description": "n8n node for [Service Name]",
+  "keywords": ["n8n-community-node-package", "[servicename]"],
+  "n8n": {
+    "nodes": [
+      "dist/nodes/[ServiceName]/[ServiceName].node.js"
+    ],
+    "credentials": [
+      "dist/credentials/[ServiceName]Api.credentials.js"
+    ]
+  }
+}
+```
+
+### Step 5: Create Credentials (if needed)
+
+File: `credentials/[ServiceName]Api.credentials.ts`
+
+```typescript
+import type {
+  IAuthenticateGeneric,
+  ICredentialTestRequest,
+  ICredentialType,
+  INodeProperties,
+} from 'n8n-workflow';
+
+export class [ServiceName]Api implements ICredentialType {
+  name = '[serviceName]Api';
+  displayName = '[Service Name] API';
+  documentationUrl = 'https://docs.[service].com';
+  
+  properties: INodeProperties[] = [
+    {
+      displayName: 'API Key',
+      name: 'apiKey',
+      type: 'string',
+      typeOptions: { password: true },
+      default: '',
+      required: true,
+    },
+  ];
+
+  authenticate: IAuthenticateGeneric = {
+    type: 'generic',
+    properties: {
+      headers: {
+        Authorization: '=Bearer {{$credentials.apiKey}}',
+      },
+    },
+  };
+
+  test: ICredentialTestRequest = {
+    request: {
+      baseURL: 'https://api.[service].com',
+      url: '/v1/user', // or appropriate test endpoint
+    },
+  };
+}
+```
+
+### Step 6: Create Node Implementation
+
+Choose the appropriate pattern:
+
+#### For Simple REST APIs (Declarative Pattern)
+
+```typescript
+import type {
+  INodeType,
+  INodeTypeDescription,
+  INodeTypeBaseDescription,
+} from 'n8n-workflow';
+
+export class [ServiceName] implements INodeType {
+  description: INodeTypeDescription;
+
+  constructor(baseDescription: INodeTypeBaseDescription) {
+    this.description = {
+      ...baseDescription,
+      displayName: '[Service Name]',
+      name: '[serviceName]',
+      icon: 'file:[serviceName].svg',
+      group: ['transform'],
+      version: 1,
+      subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+      description: 'Interact with [Service Name] API',
+      defaults: {
+        name: '[Service Name]',
+      },
+      inputs: ['main'],
+      outputs: ['main'],
+      credentials: [
+        {
+          name: '[serviceName]Api',
+          required: true,
+        },
+      ],
+      requestDefaults: {
+        baseURL: 'https://api.[service].com',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+      properties: [
+        // Resource selector
+        {
+          displayName: 'Resource',
+          name: 'resource',
+          type: 'options',
+          noDataExpression: true,
+          options: [
+            { name: 'User', value: 'user' },
+            { name: 'Post', value: 'post' },
+          ],
+          default: 'user',
+        },
+        // Operation selector
+        {
+          displayName: 'Operation',
+          name: 'operation',
+          type: 'options',
+          noDataExpression: true,
+          displayOptions: {
+            show: { resource: ['user'] },
+          },
+          options: [
+            { name: 'Get', value: 'get', routing: { request: { method: 'GET', url: '=/users/{{$parameter.userId}}' }}},
+            { name: 'List', value: 'list', routing: { request: { method: 'GET', url: '/users' }}},
+          ],
+          default: 'get',
+        },
+        // Add operation-specific parameters
+      ],
+    };
+  }
+}
+```
+
+#### For Complex Logic (Programmatic Pattern)
+
+```typescript
+import type {
+  IExecuteFunctions,
+  INodeExecutionData,
+  INodeType,
+  INodeTypeDescription,
+} from 'n8n-workflow';
+
+export class [ServiceName] implements INodeType {
+  description: INodeTypeDescription = {
+    displayName: '[Service Name]',
+    name: '[serviceName]',
+    // ... (same as declarative)
+    properties: [
+      // Define parameters
+    ],
+  };
+
+  async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+    const items = this.getInputData();
+    const returnData: INodeExecutionData[] = [];
+    const resource = this.getNodeParameter('resource', 0);
+    const operation = this.getNodeParameter('operation', 0);
+
+    for (let i = 0; i < items.length; i++) {
+      try {
+        if (resource === 'user') {
+          if (operation === 'get') {
+            // Implementation
+          }
+        }
+      } catch (error) {
+        if (this.continueOnFail()) {
+          returnData.push({ json: { error: error.message }});
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    return [returnData];
+  }
+}
+```
+
+### Step 7: Write Tests
+
+Create tests in `__tests__/nodes/[ServiceName]/`:
+
+```typescript
+import { mock } from 'jest-mock-extended';
+import type { IExecuteFunctions } from 'n8n-workflow';
+import { [ServiceName] } from '../../../nodes/[ServiceName]/[ServiceName].node';
+
+describe('[ServiceName] Node', () => {
+  let mockExecuteFunctions: IExecuteFunctions;
+  let node: [ServiceName];
+
+  beforeEach(() => {
+    mockExecuteFunctions = mock<IExecuteFunctions>();
+    node = new [ServiceName]();
+  });
+
+  it('should be defined', () => {
+    expect(node).toBeDefined();
+    expect(node.description.displayName).toBe('[Service Name]');
+  });
+
+  // Add operation tests
+});
+```
+
+### Step 8: Update README.md
+
+**IMPORTANT**: Regenerate README using the template:
+
+1. Read `README_TEMPLATE.md`
+2. Replace all placeholders:
+   - `[Service Name]` → Actual service name
+   - `[serviceName]` → camelCase version
+   - `n8n-nodes-starter` → `n8n-nodes-[servicename]`
+3. Add actual operations and credentials info
+4. Include usage examples
+5. Save as `README.md`
+
+### Step 9: Verify Changes
+
+Run this checklist:
+
+```bash
+# Build check
+npm run build
+
+# Lint check
+npm run lint
+
+# Test check
+npm test
+
+# Verify package.json has correct:
+# - name
+# - description
+# - n8n.nodes paths
+# - n8n.credentials paths
+
+# Verify no "Example" references remain:
+grep -r "Example" nodes/ credentials/ --exclude-dir=node_modules
+```
+
+## 🎨 Node Design Guidelines
+
+### Naming Conventions
+
+- **Files**: `ServiceName.node.ts` (PascalCase)
+- **Class names**: `export class ServiceName` (PascalCase)
+- **Node name**: `name: 'serviceName'` (camelCase)
+- **Credential name**: `name: 'serviceNameApi'` (camelCase + Api suffix)
+- **Display names**: `displayName: 'Service Name'` (Title Case)
+
+### Icon Guidelines
+
+- Format: SVG
+- Size: Approximately 60x60px
+- Monochrome or brand colors
+- Simple, recognizable design
+- Save as: `icon.svg` in node directory
+
+### Parameter Best Practices
+
+1. **Always include Resource and Operation selectors** for multi-operation nodes
+2. **Use `noDataExpression: true`** for resource/operation parameters
+3. **Use `displayOptions`** to show/hide fields contextually
+4. **Provide sensible defaults**
+5. **Add helpful descriptions**
+6. **Use proper parameter types** (string, options, number, boolean, etc.)
+
+### Error Handling
+
+```typescript
+import { NodeOperationError } from 'n8n-workflow';
+
+// For user errors
+throw new NodeOperationError(this.getNode(), 'User ID is required');
+
+// For API errors
+throw new NodeApiError(this.getNode(), error);
+
+// Support continue on fail
+if (this.continueOnFail()) {
+  returnData.push({ json: { error: error.message }});
+  continue;
+}
+```
+
+## 📚 Technical Reference
+
+For detailed technical information, refer to:
+
+- **Node Architecture**: See "Node Structure" section below
+- **Testing Patterns**: `agents/UNIT_TESTING.md`
+- **Workflow Testing**: `agents/WORKFLOW_TESTING.md`
+- **Publishing**: `docs/PUBLISHING.md`
 
 ---
 
-## Node Structure
+## Node Structure Reference
 
 Every node implements the `INodeType` interface with:
 - `description: INodeTypeDescription` - Node metadata and UI configuration
@@ -109,8 +408,6 @@ routing: {
 }
 ```
 
-This pattern allows combining multiple operation routings into a single property definition.
-
 ### Trigger Nodes
 - **Webhook triggers**: Implement `webhook` and `webhookMethods` (checkExists, create, delete).
 - **Polling triggers**: Set `polling: true` and implement `poll`. Use `getWorkflowStaticData('node')` to persist state.
@@ -151,22 +448,6 @@ Nodes can test credentials via `methods.credentialTest`.
 - Mock all external dependencies
 - Test happy paths, error handling, edge cases, and binary data
 
-## Common Development Tasks
-
-### Creating a New Node
-1. Create directory: `nodes/YourService/`
-2. Create `YourService.node.ts` implementing `INodeType`
-3. Add icon SVG files in node directory
-4. Define credentials in `credentials/` if needed
-5. Write tests following testing guidelines
-6. Register in `package.json` nodes array if needed
-
-### Adding Dynamic Options
-Add `loadOptionsMethod` to parameter's `typeOptions` and implement method in `methods.loadOptions`.
-
-### Adding Resource Locator
-Change parameter type to `'resourceLocator'`, define modes (list, id, url), add `searchListMethod` for list mode, add `extractValue` regex for URL mode.
-
 ## Best Practices
 
 ### TypeScript
@@ -189,3 +470,28 @@ Change parameter type to `'resourceLocator'`, define modes (list, id, url), add 
 - Use clear `displayName` and `description` fields
 - Set sensible default values
 - Use `displayOptions` to show/hide fields conditionally
+
+---
+
+## 🤖 Agent Communication Protocol
+
+When you complete a task, provide a summary like this:
+
+```
+✅ Task Complete: Created [Service Name] Node
+
+Changes made:
+- ✅ Removed Example node
+- ✅ Created [ServiceName] node with [X] operations
+- ✅ Created [ServiceName]Api credentials
+- ✅ Updated package.json
+- ✅ Regenerated README.md
+- ✅ Added unit tests
+
+Next steps:
+1. Run `npm install`
+2. Run `npm run build`
+3. Test the node locally in n8n
+```
+
+This helps track progress and ensures nothing was missed.
