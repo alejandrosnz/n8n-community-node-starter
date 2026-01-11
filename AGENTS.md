@@ -2,6 +2,19 @@
 
 > **Important**: You are working with an n8n community node starter template. Follow these instructions carefully to avoid common mistakes.
 
+## 🚀 Quick Start
+
+1. **Understand the request**: Identify service name, operations, and credentials.
+2. **Clean up**: Remove example node and update package.json.
+3. **Create node**: Use declarative or programmatic pattern based on API complexity.
+4. **Add credentials**: Implement authentication if needed.
+5. **Write tests**: Use agents/UNIT_TESTING.md for guidance.
+6. **Test manually**: Follow agents/WORKFLOW_TESTING.md for workflow testing.
+7. **Regenerate docs**: Update README.md from README_TEMPLATE.md.
+8. **Build and verify**: Run npm run build, lint, and test.
+
+For detailed steps, see below. To get more info about specific tasks, check agents/ folder.
+
 ## 🎯 Your Mission
 
 When asked to create a new n8n node, you must:
@@ -358,9 +371,10 @@ if (this.continueOnFail()) {
 For detailed technical information, refer to:
 
 - **Node Architecture**: See "Node Structure" section below
-- **Testing Patterns**: `agents/UNIT_TESTING.md`
-- **Workflow Testing**: `agents/WORKFLOW_TESTING.md`
-- **Publishing**: `docs/PUBLISHING.md`
+- **Testing Patterns**: `agents/UNIT_TESTING.md` - Detailed prompts for AI-assisted unit testing, including mocking strategies and test categories
+- **Workflow Testing**: `agents/WORKFLOW_TESTING.md` - Guide for manual workflow testing in n8n, with example JSON structures
+- **Quick Test Guide**: `agents/QUICK_GUIDE.md` - Fast reference for using AI to write tests
+- **Publishing**: `docs/PUBLISHING.md` - Instructions for publishing your node to the n8n community
 
 ---
 
@@ -392,6 +406,7 @@ routing: {
   send: {
     preSend: [
       (request: IHttpRequestOptions) => {
+        // Dynamically select routing based on operation for declarative nodes with multiple operations
         const operation = (request.body as { operation: string }).operation;
         switch (operation) {
           case 'list':
@@ -463,7 +478,7 @@ Nodes can test credentials via `methods.credentialTest`.
 ### Code Organization
 - Separate operation/field descriptions into separate files
 - Create reusable API request helpers in GenericFunctions
-- Use marker interfaces to categorize classes (e.g., `implements ExampleServiceN8nResource`)
+- Use marker interfaces to categorize classes (e.g., `implements [ServiceName]N8nResource`)
 - Use kebab-case for files, PascalCase for classes
 
 ### UI/UX

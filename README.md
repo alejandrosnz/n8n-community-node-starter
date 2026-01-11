@@ -91,6 +91,14 @@ This starter is designed to work seamlessly with modern AI coding assistants lik
 
 ---
 
+## 🏗️ Nodes Built with This Starter
+
+Here are some community nodes that have been built using this starter template:
+
+- **[n8n-nodes-trillium](https://github.com/alejandrosnz/n8n-nodes-trillium)** - Integration with Trillium API
+
+---
+
 ## 📚 Documentation
 
 - **[AGENTS.md](./AGENTS.md)** – Complete guide for agentic-first n8n development
