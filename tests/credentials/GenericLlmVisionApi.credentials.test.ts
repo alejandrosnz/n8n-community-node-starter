@@ -26,7 +26,7 @@ describe('GenericLlmVisionApi Credentials', () => {
   });
 
   it('should have test request', () => {
-    expect(credentials.test.request.baseURL).toBe('https://api.openai.com');
-    expect(credentials.test.request.url).toBe('/v1/models');
+    expect(credentials.test.request.url).toBe('/models');
+    expect(credentials.test.request.baseURL).toContain('$credentials.provider');
   });
 });

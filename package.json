@@ -43,7 +43,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/GenericLlmVisionApi.credentials.js"
+      "dist/credentials/GenericLlmVisionApi.credentials.js",
+      "dist/credentials/OpenRouterApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/GenericLlmVision/GenericLlmVision.node.js"

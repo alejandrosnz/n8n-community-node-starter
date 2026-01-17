@@ -1,14 +1,23 @@
 import { mock } from 'jest-mock-extended';
 import type { IExecuteFunctions } from 'n8n-workflow';
-import { GenericLlmVision } from '../../../nodes/GenericLlmVision/GenericLlmVision.node';
+import * as nodeModule from '../../../nodes/GenericLlmVision/GenericLlmVision.node';
 
 describe('GenericLlmVision Node', () => {
   let mockExecuteFunctions: IExecuteFunctions;
-  let node: GenericLlmVision;
+  let node: nodeModule.GenericLlmVision;
 
   beforeEach(() => {
     mockExecuteFunctions = mock<IExecuteFunctions>();
-    node = new GenericLlmVision();
+    node = new nodeModule.GenericLlmVision();
+    (mockExecuteFunctions as any).getInputData = jest.fn().mockReturnValue([{
+      json: {},
+      binary: {
+        data: {
+          data: 'base64imagedata',
+          mimeType: 'image/jpeg',
+        }
+      }
+    }]);
   });
 
   it('should be defined', () => {
@@ -66,11 +75,6 @@ describe('GenericLlmVision Node', () => {
         'Authorization': 'Bearer test-key',
         'Content-Type': 'application/json',
       });
-      (mockExecuteFunctions as any).prepareImage = jest.fn().mockResolvedValue({
-        data: 'base64imagedata',
-        mimeType: 'image/jpeg',
-        size: 1024,
-      });
       (mockExecuteFunctions as any).buildBody = jest.fn().mockReturnValue({
         model: 'gpt-4o',
         messages: [
@@ -109,11 +113,6 @@ describe('GenericLlmVision Node', () => {
         baseUrl: 'https://api.anthropic.com/v1',
       });
       (mockExecuteFunctions as any).getDefaultBaseUrl = jest.fn().mockReturnValue('https://api.anthropic.com/v1');
-      (mockExecuteFunctions as any).prepareImage = jest.fn().mockResolvedValue({
-        data: 'base64imagedata',
-        mimeType: 'image/jpeg',
-        size: 1024,
-      });
       (mockExecuteFunctions as any).buildHeaders = jest.fn().mockReturnValue({
         'x-api-key': 'test-key',
         'anthropic-version': '2023-06-01',
@@ -159,11 +158,6 @@ describe('GenericLlmVision Node', () => {
         };
         return params[name];
       });
-      (mockExecuteFunctions as any).prepareImage = jest.fn().mockResolvedValue({
-        data: 'base64imagedata',
-        mimeType: 'image/jpeg',
-        size: 1024,
-      });
       (mockExecuteFunctions as any).extractAnalysis = () => 'Analysis';
       (mockExecuteFunctions as any).extractMetadata = () => ({
         model: 'gpt-4o',
@@ -181,6 +175,33 @@ describe('GenericLlmVision Node', () => {
 
       expect((result[0][0].json as any).analysis.analysis).toBe('Analysis');
       expect((result[0][0].json as any).analysis.metadata).toBeDefined();
+    });
+
+    it('should handle image size exceeding limit', async () => {
+      (mockExecuteFunctions as any).getInputData = jest.fn().mockReturnValue([{
+        json: {},
+        binary: {
+          data: {
+            data: 'a'.repeat(25 * 1024 * 1024 * 4 / 3),
+            mimeType: 'image/jpeg',
+          }
+        }
+      }]);
+      (mockExecuteFunctions.helpers.request as jest.Mock).mockResolvedValue({});
+
+      await expect(node.execute.call(mockExecuteFunctions)).rejects.toThrow('Image size exceeds maximum allowed size of 20MB');
+    });
+
+    it('should handle continue on fail', async () => {
+      (mockExecuteFunctions.continueOnFail as jest.Mock).mockReturnValue(true);
+      (mockExecuteFunctions as any).getInputData = jest.fn().mockReturnValue([{
+        json: {},
+        binary: {}
+      }]);
+
+      const result = await node.execute.call(mockExecuteFunctions);
+
+      expect(result[0][0].json.error).toBe('No binary data found in property \'data\'');
     });
   });
 });

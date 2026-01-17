@@ -245,7 +245,7 @@ export class GenericLlmVision implements INodeType {
       try {
         const provider = credentials.provider as string;
         const apiKey = credentials.apiKey as string;
-        let baseUrl = credentials.baseUrl as string || (this as any).getDefaultBaseUrl(provider);
+        let baseUrl = credentials.baseUrl as string || getDefaultBaseUrl(provider);
 
         const model = this.getNodeParameter('model', i) as string;
         const imageSource = this.getNodeParameter('imageSource', i) as string;
@@ -257,7 +257,7 @@ export class GenericLlmVision implements INodeType {
         const includeMetadata = this.getNodeParameter('includeMetadata', i) as boolean;
 
         // Validate and prepare image
-        const imageData = await (this as any).prepareImage(imageSource, i);
+        const imageData = await prepareImage(imageSource, i, items, this.getNodeParameter.bind(this));
         if (!imageData) {
           throw new Error('Failed to prepare image data');
         }
@@ -269,8 +269,8 @@ export class GenericLlmVision implements INodeType {
         }
 
         // Build request
-        const headers = (this as any).buildHeaders(provider, apiKey, advancedOptions.customHeaders);
-        const body = (this as any).buildBody(provider, model, prompt, imageData.data, imageData.mimeType, imageDetail, modelParameters, advancedOptions);
+        const headers = buildHeaders(provider, apiKey, advancedOptions.customHeaders);
+        const body = buildBody(provider, model, prompt, imageData.data, imageData.mimeType, imageDetail, modelParameters, advancedOptions);
         const url = provider === 'anthropic' ? `${baseUrl}/messages` : `${baseUrl}/chat/completions`;
 
         const response = await this.helpers.request({
@@ -283,12 +283,12 @@ export class GenericLlmVision implements INodeType {
         });
 
         // Process response
-        const analysis = (this as any).extractAnalysis(provider, response);
+        const analysis = extractAnalysis(provider, response);
         const result: any = {};
         if (includeMetadata) {
           result[outputPropertyName] = {
             analysis,
-            metadata: (this as any).extractMetadata(response),
+            metadata: extractMetadata(response),
           };
         } else {
           result[outputPropertyName] = analysis;
@@ -312,175 +312,171 @@ export class GenericLlmVision implements INodeType {
 
     return [returnData];
   }
+}
 
-  // @ts-ignore
-  private async prepareImage(imageSource: string, itemIndex: number): Promise<{ data: string; mimeType: string; size: number } | null> {
-    if (imageSource === 'binaryData') {
-      const binaryPropertyName = (this as any).getNodeParameter('binaryPropertyName', itemIndex) as string;
-      const binaryData = ((this as any).helpers as any).getBinaryData(binaryPropertyName, itemIndex);
-      if (!binaryData) {
-        throw new Error(`No binary data found in property '${binaryPropertyName}'`);
-      }
-      // Validate MIME type
-      const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!allowedMimes.includes(binaryData.mimeType)) {
-        throw new Error(`Unsupported image format: ${binaryData.mimeType}. Supported formats: JPEG, PNG, WebP, GIF`);
-      }
-      const buffer = Buffer.from(binaryData.data, 'base64');
-      return {
-        data: buffer.toString('base64'),
-        mimeType: binaryData.mimeType,
-        size: buffer.length,
-      };
-    } else if (imageSource === 'url') {
-      const imageUrl = (this as any).getNodeParameter('imageUrl', itemIndex) as string;
-      // Basic URL validation
-      try {
-        new URL(imageUrl);
-      } catch {
-        throw new Error('Invalid image URL provided');
-      }
-      // Sanitize URL (basic)
-      const sanitizedUrl = imageUrl.trim();
-      if (sanitizedUrl.includes('<script') || sanitizedUrl.includes('javascript:')) {
-        throw new Error('Potentially unsafe URL detected');
-      }
-      return {
-        data: sanitizedUrl,
-        mimeType: 'url',
-        size: sanitizedUrl.length, // Approximate
-      };
-    } else {
-      const base64Data = (this as any).getNodeParameter('base64Data', itemIndex) as string;
-      // Basic base64 validation
-      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-        throw new Error('Invalid base64 data provided');
-      }
-      const buffer = Buffer.from(base64Data, 'base64');
-      return {
-        data: base64Data,
-        mimeType: 'image/jpeg', // Assume JPEG for base64
-        size: buffer.length,
-      };
+// Helper functions
+function getDefaultBaseUrl(provider: string): string {
+  const urls: { [key: string]: string } = {
+    openrouter: 'https://openrouter.ai/api/v1',
+    groq: 'https://api.groq.com/openai/v1',
+    grok: 'https://api.x.ai/v1',
+    openai: 'https://api.openai.com/v1',
+    anthropic: 'https://api.anthropic.com/v1',
+  };
+  return urls[provider] || '';
+}
+
+function buildHeaders(provider: string, apiKey: string, customHeaders?: any[]): any {
+  const headers: any = {};
+
+  if (provider === 'anthropic') {
+    headers['x-api-key'] = apiKey;
+    headers['anthropic-version'] = '2023-06-01';
+  } else {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  headers['Content-Type'] = 'application/json';
+
+  if (customHeaders) {
+    for (const header of customHeaders) {
+      headers[header.name] = header.value;
     }
   }
 
-  // @ts-ignore
-  private getDefaultBaseUrl(provider: string): string {
-    const urls: { [key: string]: string } = {
-      openrouter: 'https://openrouter.ai/api/v1',
-      groq: 'https://api.groq.com/openai/v1',
-      grok: 'https://api.x.ai/v1',
-      openai: 'https://api.openai.com/v1',
-      anthropic: 'https://api.anthropic.com/v1',
-    };
-    return urls[provider] || '';
+  return headers;
+}
+
+function buildBody(provider: string, model: string, prompt: string, imageData: string, mimeType: string, imageDetail: string, modelParameters: any, advancedOptions: any): any {
+  const body: any = {
+    model,
+    ...modelParameters,
+  };
+
+  if (advancedOptions.responseFormat) {
+    body.response_format = { type: advancedOptions.responseFormat };
   }
 
-  // @ts-ignore
-  private buildHeaders(provider: string, apiKey: string, customHeaders?: any[]): any {
-    const headers: any = {};
-
-    if (provider === 'anthropic') {
-      headers['x-api-key'] = apiKey;
-      headers['anthropic-version'] = '2023-06-01';
-    } else {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
-
-    headers['Content-Type'] = 'application/json';
-
-    if (customHeaders) {
-      for (const header of customHeaders) {
-        headers[header.name] = header.value;
-      }
-    }
-
-    return headers;
-  }
-
-  // @ts-ignore
-  private buildBody(provider: string, model: string, prompt: string, imageData: string, mimeType: string, imageDetail: string, modelParameters: any, advancedOptions: any): any {
-    const body: any = {
-      model,
-      ...modelParameters,
-    };
-
-    if (advancedOptions.responseFormat) {
-      body.response_format = { type: advancedOptions.responseFormat };
-    }
-
-    if (provider === 'anthropic') {
-      body.messages = [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: mimeType === 'url' ? 'url' : 'base64',
-                media_type: mimeType === 'url' ? undefined : mimeType,
-                data: mimeType === 'url' ? imageData : imageData,
-              },
-            },
-            {
-              type: 'text',
-              text: prompt,
-            },
-          ],
-        },
-      ];
-      if (advancedOptions.systemPrompt) {
-        body.system = advancedOptions.systemPrompt;
-      }
-    } else {
-      body.messages = [];
-      if (advancedOptions.systemPrompt) {
-        body.messages.push({
-          role: 'system',
-          content: advancedOptions.systemPrompt,
-        });
-      }
-      body.messages.push({
+  if (provider === 'anthropic') {
+    body.messages = [
+      {
         role: 'user',
         content: [
+          {
+            type: 'image',
+            source: {
+              type: mimeType === 'url' ? 'url' : 'base64',
+              media_type: mimeType === 'url' ? undefined : mimeType,
+              data: mimeType === 'url' ? imageData : imageData,
+            },
+          },
           {
             type: 'text',
             text: prompt,
           },
-          {
-            type: 'image_url',
-            image_url: {
-              url: mimeType === 'url' ? imageData : `data:${mimeType};base64,${imageData}`,
-              detail: imageDetail,
-            },
-          },
         ],
+      },
+    ];
+    if (advancedOptions.systemPrompt) {
+      body.system = advancedOptions.systemPrompt;
+    }
+  } else {
+    body.messages = [];
+    if (advancedOptions.systemPrompt) {
+      body.messages.push({
+        role: 'system',
+        content: advancedOptions.systemPrompt,
       });
     }
-
-    if (advancedOptions.additionalParameters) {
-      Object.assign(body, JSON.parse(advancedOptions.additionalParameters));
-    }
-
-    return body;
+    body.messages.push({
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: prompt,
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: mimeType === 'url' ? imageData : `data:${mimeType};base64,${imageData}`,
+            detail: imageDetail,
+          },
+        },
+      ],
+    });
   }
 
-  // @ts-ignore
-  private extractAnalysis(provider: string, response: any): string {
-    if (provider === 'anthropic') {
-      return response.content?.[0]?.text || '';
-    } else {
-      return response.choices?.[0]?.message?.content || '';
-    }
+  if (advancedOptions.additionalParameters) {
+    Object.assign(body, JSON.parse(advancedOptions.additionalParameters));
   }
 
-  // @ts-ignore
-  private extractMetadata(response: any): any {
+  return body;
+}
+
+// Helper functions
+function extractAnalysis(provider: string, response: any): string {
+  if (provider === 'anthropic') {
+    return response.content?.[0]?.text || '';
+  } else {
+    return response.choices?.[0]?.message?.content || '';
+  }
+}
+
+function extractMetadata(response: any): any {
+  return {
+    model: response.model,
+    usage: response.usage,
+    finish_reason: response.choices?.[0]?.finish_reason,
+  };
+}
+
+export async function prepareImage(imageSource: string, itemIndex: number, items: any[], getNodeParameter: any): Promise<{ data: string; mimeType: string; size: number } | null> {
+  if (imageSource === 'binaryData') {
+    const binaryPropertyName = getNodeParameter('binaryPropertyName', itemIndex) as string;
+    const binaryData = items[itemIndex].binary[binaryPropertyName];
+    if (!binaryData) {
+      throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+    }
+    // Validate MIME type
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedMimes.includes(binaryData.mimeType)) {
+      throw new Error(`Unsupported image format: ${binaryData.mimeType}. Supported formats: JPEG, PNG, WebP, GIF`);
+    }
+    const buffer = Buffer.from(binaryData.data, 'base64');
     return {
-      model: response.model,
-      usage: response.usage,
-      finish_reason: response.choices?.[0]?.finish_reason,
+      data: buffer.toString('base64'),
+      mimeType: binaryData.mimeType,
+      size: buffer.length,
+    };
+  } else if (imageSource === 'url') {
+    const imageUrl = getNodeParameter('imageUrl', itemIndex) as string;
+    // Basic URL validation
+    try {
+      new URL(imageUrl);
+    } catch {
+      throw new Error('Invalid image URL provided');
+    }
+    // Sanitize URL (basic)
+    const sanitizedUrl = imageUrl.trim();
+    if (sanitizedUrl.includes('<script') || sanitizedUrl.includes('javascript:')) {
+      throw new Error('Potentially unsafe URL detected');
+    }
+    return {
+      data: sanitizedUrl,
+      mimeType: 'url',
+      size: sanitizedUrl.length, // Approximate
+    };
+  } else {
+    const base64Data = getNodeParameter('base64Data', itemIndex) as string;
+    // Basic base64 validation
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+      throw new Error('Invalid base64 data provided');
+    }
+    const buffer = Buffer.from(base64Data, 'base64');
+    return {
+      data: base64Data,
+      mimeType: 'image/jpeg', // Assume JPEG for base64
+      size: buffer.length,
     };
   }
 }

@@ -57,8 +57,8 @@ export class GenericLlmVisionApi implements ICredentialType {
 
   test: ICredentialTestRequest = {
     request: {
-      baseURL: 'https://api.openai.com',
-      url: '/v1/models',
+      baseURL: '={{ $credentials.provider === "openrouter" ? "https://openrouter.ai/api/v1" : $credentials.provider === "groq" ? "https://api.groq.com/openai/v1" : $credentials.provider === "grok" ? "https://api.x.ai/v1" : $credentials.provider === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1" }}',
+      url: '/models',
     },
   };
 }
