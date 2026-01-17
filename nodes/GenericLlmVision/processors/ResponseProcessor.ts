@@ -23,12 +23,10 @@ export class ResponseProcessor {
     const analysis = extractAnalysis(provider, response);
 
     if (includeMetadata) {
-      // Include both analysis and metadata (usage stats, model info, etc.)
+      // Include analysis and metadata at the top level
       return {
-        [outputPropertyName]: {
-          analysis,
-          metadata: extractMetadata(response),
-        },
+        [outputPropertyName]: analysis,
+        metadata: extractMetadata(response),
       };
     } else {
       // Return only the analysis text

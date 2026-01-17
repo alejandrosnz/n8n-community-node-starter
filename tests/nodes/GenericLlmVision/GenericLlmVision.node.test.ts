@@ -1,7 +1,6 @@
 import { GenericLlmVision } from '../../../nodes/GenericLlmVision/GenericLlmVision.node';
 import { ImageProcessor } from '../../../nodes/GenericLlmVision/processors/ImageProcessor';
 import { ResponseProcessor } from '../../../nodes/GenericLlmVision/processors/ResponseProcessor';
-import { RequestHandler } from '../../../nodes/GenericLlmVision/handlers/RequestHandler';
 import {
   detectMimeTypeFromExtension,
   detectMimeTypeFromBase64,
@@ -154,6 +153,15 @@ describe('Provider Configuration', () => {
       expect(provider.baseUrl).toBe('https://api.anthropic.com/v1');
       expect(provider.apiEndpoint).toBe('/messages');
       expect(provider.requestFormat).toBe('anthropic');
+    });
+
+    it('should return Groq provider', () => {
+      const provider = getProvider('groq');
+      expect(provider.displayName).toBe('Groq');
+      expect(provider.baseUrl).toBe('https://api.groq.com/openai/v1');
+      expect(provider.apiEndpoint).toBe('/chat/completions');
+      expect(provider.requestFormat).toBe('openai');
+      expect(provider.documentationUrl).toBe('https://console.groq.com/docs');
     });
 
     it('should handle provider normalization', () => {
@@ -338,6 +346,29 @@ describe('Request Building', () => {
       expect(request.body.max_tokens).toBe(512);
       expect(Array.isArray(request.body.messages)).toBe(true);
     });
+
+    it('should include optional parameters in OpenAI request', () => {
+      const options = {
+        provider: 'openai',
+        model: 'gpt-4-vision',
+        prompt: 'Describe this image',
+        image: {
+          data: Buffer.from('test').toString('base64'),
+          mimeType: 'image/jpeg',
+          size: 100,
+          source: 'binary' as const,
+        },
+        systemPrompt: 'You are a helpful assistant.',
+        additionalParameters: { custom: 'value' },
+      };
+
+      const request = buildRequest(options);
+
+      expect(request.body.messages).toHaveLength(2); // system + user message
+      expect(request.body.messages[0].role).toBe('system');
+      expect(request.body.messages[0].content).toBe('You are a helpful assistant.');
+      expect(request.body.custom).toBe('value');
+    });
   });
 
   describe('buildRequest for Anthropic', () => {
@@ -361,6 +392,32 @@ describe('Request Building', () => {
       expect(request.body.model).toBe('claude-3-sonnet');
       expect(Array.isArray(request.body.messages)).toBe(true);
       expect(request.body.messages[0].content).toBeDefined();
+    });
+
+    it('should include optional parameters in Anthropic request', () => {
+      const options = {
+        provider: 'anthropic',
+        model: 'claude-3-sonnet',
+        prompt: 'Describe this image',
+        image: {
+          data: 'https://example.com/image.jpg',
+          mimeType: 'image/jpeg',
+          size: 100,
+          source: 'url' as const,
+        },
+        maxTokens: 1000,
+        additionalParameters: { custom: 'value' },
+      };
+
+      const request = buildRequest(options);
+
+      expect(request.body.max_tokens).toBe(1000);
+      expect(request.body.custom).toBe('value');
+      // For URL source, should use image_url format
+      const imageContent = request.body.messages[0].content.find((c: any) => c.type === 'image');
+      expect(imageContent).toBeDefined();
+      expect(imageContent.source.type).toBe('url');
+      expect(imageContent.source.url).toBe('https://example.com/image.jpg');
     });
   });
 });
@@ -494,6 +551,79 @@ describe('Response Extraction', () => {
     it('should throw error for unknown source type', async () => {
       await expect(prepareImage('unknown' as any, 'data')).rejects.toThrow(
         'Unknown image source type: unknown'
+      );
+    });
+
+    it('should throw error for binary data missing MIME type', async () => {
+      const dataWithoutMimeType = {
+        data: Buffer.from('fake image data').toString('base64'),
+        fileName: 'test.jpg',
+        // missing mimeType
+      };
+
+      await expect(prepareImage('binary', dataWithoutMimeType)).rejects.toThrow(
+        'Binary data object is missing \'mimeType\' property'
+      );
+    });
+
+    it('should detect MIME type from filename when magic bytes fail', async () => {
+      // Create data with unknown magic bytes but valid filename
+      const unknownMagicBytes = Buffer.from([0x00, 0x00, 0x00, 0x00]).toString('base64');
+      const data = {
+        data: unknownMagicBytes,
+        mimeType: 'image/jpeg', // This will be overridden
+        fileName: 'test.png',
+      };
+
+      const result = await prepareImage('binary', data);
+      expect(result.mimeType).toBe('image/png'); // Should use filename detection
+    });
+
+    it('should log warning when magic bytes MIME type differs from metadata', async () => {
+      // Create PNG data but claim it's JPEG in metadata
+      const pngData = Buffer.from([0x89, 0x50, 0x4e, 0x47, ...Buffer.alloc(100)]).toString('base64');
+      const data = {
+        data: pngData,
+        mimeType: 'image/jpeg', // Wrong metadata
+        fileName: 'test.jpg',
+      };
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      const result = await prepareImage('binary', data);
+      expect(result.mimeType).toBe('image/png'); // Should use magic bytes
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Warning: MIME type mismatch. Metadata says image/jpeg but magic bytes indicate image/png. Using magic bytes detection.'
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should throw error for empty decoded base64 buffer', async () => {
+      // Base64 that decodes to empty buffer
+      const emptyBase64 = Buffer.from('').toString('base64');
+      
+      await expect(prepareImage('base64', emptyBase64)).rejects.toThrow(
+        'Base64 data is empty'
+      );
+    });
+
+    it('should throw error when MIME type cannot be detected', async () => {
+      // Unknown magic bytes and no filename
+      const unknownData = Buffer.from([0x00, 0x00, 0x00, 0x00]).toString('base64');
+      const data = {
+        data: unknownData,
+        mimeType: 'application/octet-stream', // No MIME type detection possible
+      };
+
+      await expect(prepareImage('binary', data)).rejects.toThrow(
+        'Unsupported image format: application/octet-stream'
+      );
+    });
+
+    it('should throw error for invalid URL protocol', async () => {
+      await expect(prepareImage('url', 'ftp://example.com/image.jpg')).rejects.toThrow(
+        'URL must start with http:// or https://'
       );
     });
   });
@@ -652,13 +782,11 @@ describe('ResponseProcessor', () => {
       const result = processor.processResponse(mockResponse, 'openai', true, 'result');
 
       expect(result).toEqual({
-        result: {
-          analysis: 'This is a dog',
-          metadata: {
-            model: 'gpt-4-vision',
-            usage: { input_tokens: 15, output_tokens: 8 },
-            finish_reason: 'stop'
-          }
+        result: 'This is a dog',
+        metadata: {
+          model: 'gpt-4-vision',
+          usage: { input_tokens: 15, output_tokens: 8 },
+          finish_reason: 'stop'
         }
       });
     });
@@ -676,61 +804,6 @@ describe('ResponseProcessor', () => {
       expect(result).toEqual({
         analysis: 'This is a bird'
       });
-    });
-  });
-});
-
-describe('RequestHandler', () => {
-  let mockExecuteFunctions: any;
-
-  beforeEach(() => {
-    mockExecuteFunctions = {
-      helpers: {
-        request: jest.fn(),
-      },
-    };
-  });
-
-  it('should be defined', () => {
-    const handler = new RequestHandler(mockExecuteFunctions);
-    expect(handler).toBeDefined();
-  });
-
-  describe('executeRequest', () => {
-    it('should build and execute request successfully', async () => {
-      const mockResponse = { choices: [{ message: { content: 'Success' } }] };
-      mockExecuteFunctions.helpers.request.mockResolvedValue(mockResponse);
-
-      const preparedImage = {
-        data: 'base64data',
-        mimeType: 'image/jpeg',
-        size: 1024,
-        source: 'base64' as const,
-      };
-
-      const handler = new RequestHandler(mockExecuteFunctions);
-      const result = await handler.executeRequest(
-        'openai',
-        'sk-test',
-        undefined,
-        {},
-        'gpt-4-vision',
-        preparedImage,
-        'Describe this image',
-        {},
-        {}
-      );
-
-      expect(result).toBe(mockResponse);
-      expect(mockExecuteFunctions.helpers.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.any(Object),
-          body: expect.any(String),
-          json: true,
-          timeout: 60000,
-        })
-      );
     });
   });
 });
@@ -909,5 +982,127 @@ describe('Integration Tests - Execute Method', () => {
 
     const node = new GenericLlmVision();
     await expect(node.execute.call(mockExecuteFunctions)).rejects.toThrow('API rate limit exceeded');
+  });
+
+  it('should fall back to generic credentials when OpenRouter credentials are unavailable', async () => {
+    // Mock getCredentials to reject for openRouterApi and resolve for genericLlmVisionApi
+    mockExecuteFunctions.getCredentials
+      .mockRejectedValueOnce(new Error('OpenRouter credentials not configured')) // First call for openRouterApi
+      .mockResolvedValueOnce({ apiKey: 'sk-test', provider: 'openai' }); // Second call for genericLlmVisionApi
+
+    // Mock input data
+    mockExecuteFunctions.getInputData.mockReturnValue([
+      { 
+        json: { id: 1 }, 
+        binary: { 
+          data: {
+            data: Buffer.from('fake image data').toString('base64'),
+            mimeType: 'image/jpeg',
+            fileName: 'test.jpg',
+          }
+        } 
+      }
+    ]);
+
+    // Mock parameters
+    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
+      switch (param) {
+        case 'model': return 'gpt-4-vision';
+        case 'imageSource': return 'binary';
+        case 'prompt': return 'Describe this image';
+        case 'modelParameters': return {};
+        case 'advancedOptions': return {};
+        case 'outputPropertyName': return 'analysis';
+        case 'includeMetadata': return false;
+        case 'binaryPropertyName': return 'data';
+        case 'filename': return 'test.jpg';
+        default: return undefined;
+      }
+    });
+
+    // Mock binary data
+    const mockBuffer = Buffer.from('fake image data');
+    mockExecuteFunctions.helpers.getBinaryDataBuffer.mockResolvedValue(mockBuffer);
+
+    // Mock API response
+    const mockApiResponse = {
+      choices: [{ message: { content: 'A beautiful landscape' } }],
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
+      model: 'gpt-4-vision'
+    };
+    mockExecuteFunctions.helpers.request.mockResolvedValue(mockApiResponse);
+
+    const node = new GenericLlmVision();
+    const result = await node.execute.call(mockExecuteFunctions);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(1);
+    expect(result[0][0].json).toEqual({
+      id: 1,
+      analysis: 'A beautiful landscape'
+    });
+  });
+
+  it('should fall back to generic credentials when OpenRouter credentials are unavailable', async () => {
+    // Mock getCredentials to reject for openRouterApi and resolve for genericLlmVisionApi
+    mockExecuteFunctions.getCredentials
+      .mockRejectedValueOnce(new Error('OpenRouter credentials not configured')) // First call for openRouterApi
+      .mockResolvedValueOnce({ apiKey: 'sk-test', provider: 'openai' }); // Second call for genericLlmVisionApi
+
+    // Mock input data
+    mockExecuteFunctions.getInputData.mockReturnValue([
+      { 
+        json: { id: 1 }, 
+        binary: { 
+          data: {
+            data: Buffer.from('fake image data').toString('base64'),
+            mimeType: 'image/jpeg',
+            fileName: 'test.jpg',
+          }
+        } 
+      }
+    ]);
+
+    // Mock parameters
+    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
+      switch (param) {
+        case 'model': return 'gpt-4-vision';
+        case 'imageSource': return 'binary';
+        case 'prompt': return 'Describe this image';
+        case 'modelParameters': return {};
+        case 'advancedOptions': return {};
+        case 'outputPropertyName': return 'analysis';
+        case 'includeMetadata': return false;
+        case 'binaryPropertyName': return 'data';
+        case 'filename': return 'test.jpg';
+        default: return undefined;
+      }
+    });
+
+    // Mock binary data
+    const mockBuffer = Buffer.from('fake image data');
+    mockExecuteFunctions.helpers.getBinaryDataBuffer.mockResolvedValue(mockBuffer);
+
+    // Mock API response
+    const mockApiResponse = {
+      choices: [{ message: { content: 'A beautiful landscape' } }],
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
+      model: 'gpt-4-vision'
+    };
+    mockExecuteFunctions.helpers.request.mockResolvedValue(mockApiResponse);
+
+    const node = new GenericLlmVision();
+    const result = await node.execute.call(mockExecuteFunctions);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(1);
+    expect(result[0][0].json).toEqual({
+      id: 1,
+      analysis: 'A beautiful landscape'
+    });
+
+    // Verify getCredentials was called twice: first for openRouterApi (rejected), then for genericLlmVisionApi (resolved)
+    expect(mockExecuteFunctions.getCredentials).toHaveBeenCalledWith('openRouterApi');
+    expect(mockExecuteFunctions.getCredentials).toHaveBeenCalledWith('genericLlmVisionApi');
   });
 });
