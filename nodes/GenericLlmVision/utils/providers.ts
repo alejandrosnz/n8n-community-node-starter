@@ -154,3 +154,24 @@ export function getHeaders(provider: ProviderType | string, apiKey: string, cust
 
   return headers;
 }
+
+/**
+ * Get provider list for options
+ * @returns Array of provider options for UI dropdown
+ */
+export function getProviderOptions() {
+  return Object.values(PROVIDERS)
+    .filter(p => p.name !== 'custom')
+    .map(provider => ({
+      name: provider.displayName,
+      value: provider.name,
+      description: provider.documentationUrl ? `Docs: ${provider.documentationUrl}` : undefined,
+    }))
+    .concat([
+      {
+        name: 'Custom Provider',
+        value: 'custom',
+        description: 'Configure a custom endpoint',
+      },
+    ]);
+}

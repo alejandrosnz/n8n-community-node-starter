@@ -149,9 +149,9 @@ export async function prepareImage(
 
     const availableProps = Object.keys(imageData).join(', ');
 
-    if (!imageData.data) {
+    if (!('data' in imageData) || typeof imageData.data !== 'string') {
       throw new Error(
-        `Binary data object is missing 'data' property. ` +
+        `Binary data object is missing 'data' property or it's not a string. ` +
         `Available properties: [${availableProps}]. ` +
         `This usually means the binary property name is incorrect or the previous node didn't output binary data.`
       );
@@ -162,14 +162,6 @@ export async function prepareImage(
         `Binary data object is missing 'mimeType' property. ` +
         `Available properties: [${availableProps}]. ` +
         `The previous node may not be setting the MIME type correctly.`
-      );
-    }
-
-    // Ensure data is not empty
-    if (!imageData.data || imageData.data.length === 0) {
-      throw new Error(
-        `Binary data 'data' property is empty. ` +
-        `Make sure the previous node is actually outputting image data.`
       );
     }
 
@@ -201,6 +193,11 @@ export async function prepareImage(
     // Verify base64 decoding and get size
     let buffer: Buffer;
     try {
+      // First validate that it's valid base64
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(imageData.data)) {
+        throw new Error('Invalid base64 format');
+      }
+
       buffer = Buffer.from(imageData.data, 'base64');
     } catch (error) {
       throw new Error(

@@ -248,11 +248,12 @@ export function extractAnalysis(provider: string, response: any): string {
  * @returns Record<string, any> - Metadata object with usage stats and model info
  */
 export function extractMetadata(response: any): Record<string, any> {
+  const usage = response.usage || {};
   return {
     model: response.model,
-    usage: response.usage || {
-      input_tokens: response.usage?.prompt_tokens,
-      output_tokens: response.usage?.completion_tokens,
+    usage: {
+      input_tokens: usage.prompt_tokens || usage.input_tokens,
+      output_tokens: usage.completion_tokens || usage.output_tokens,
     },
     finish_reason: response.choices?.[0]?.finish_reason || response.stop_reason,
   };
