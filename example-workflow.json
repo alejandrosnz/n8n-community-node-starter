@@ -28,73 +28,6 @@
     },
     {
       "parameters": {
-        "model": "google/gemini-2.0-flash-lite-001",
-        "imageSource": "url",
-        "imageUrl": "={{ $json.sample_image }}",
-        "modelParameters": {},
-        "advancedOptions": {}
-      },
-      "type": "CUSTOM.genericLlmVision",
-      "typeVersion": 1,
-      "position": [
-        448,
-        -16
-      ],
-      "id": "58c19ba4-f880-4b46-960e-57a71cbd6486",
-      "name": "Generic LLM Vision",
-      "credentials": {
-        "genericLlmVisionApi": {
-          "id": "I8oGRkKW1GlKbhWT",
-          "name": "Generic LLM Vision - openrouter"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "google/gemini-2.0-flash-lite-001",
-        "modelParameters": {},
-        "advancedOptions": {}
-      },
-      "type": "CUSTOM.genericLlmVision",
-      "typeVersion": 1,
-      "position": [
-        672,
-        80
-      ],
-      "id": "7bb41bbe-1546-439b-bf9b-9811163dc9e0",
-      "name": "Generic LLM Vision1",
-      "credentials": {
-        "genericLlmVisionApi": {
-          "id": "I8oGRkKW1GlKbhWT",
-          "name": "Generic LLM Vision - openrouter"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "google/gemini-2.0-flash-lite-001",
-        "imageSource": "base64",
-        "base64Data": "={{ $json.base64 }}",
-        "modelParameters": {},
-        "advancedOptions": {}
-      },
-      "type": "CUSTOM.genericLlmVision",
-      "typeVersion": 1,
-      "position": [
-        896,
-        272
-      ],
-      "id": "d9e84ea5-12ce-4fec-b8de-6d06461e91db",
-      "name": "Generic LLM Vision2",
-      "credentials": {
-        "genericLlmVisionApi": {
-          "id": "I8oGRkKW1GlKbhWT",
-          "name": "Generic LLM Vision - openrouter"
-        }
-      }
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -128,6 +61,73 @@
       ],
       "id": "33942f35-c225-40c5-b234-6283520778e0",
       "name": "Binary to Base64"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-lite-001",
+        "imageSource": "url",
+        "imageUrl": "={{ $json.sample_image }}",
+        "modelParameters": {},
+        "advancedOptions": {}
+      },
+      "type": "CUSTOM.genericLlmVision",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "58c19ba4-f880-4b46-960e-57a71cbd6486",
+      "name": "Generic LLM Vision (URL)",
+      "credentials": {
+        "genericLlmVisionApi": {
+          "id": "I8oGRkKW1GlKbhWT",
+          "name": "Generic LLM Vision - openrouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-lite-001",
+        "modelParameters": {},
+        "advancedOptions": {}
+      },
+      "type": "CUSTOM.genericLlmVision",
+      "typeVersion": 1,
+      "position": [
+        672,
+        80
+      ],
+      "id": "7bb41bbe-1546-439b-bf9b-9811163dc9e0",
+      "name": "Generic LLM Vision (BINARY)",
+      "credentials": {
+        "genericLlmVisionApi": {
+          "id": "I8oGRkKW1GlKbhWT",
+          "name": "Generic LLM Vision - openrouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-lite-001",
+        "imageSource": "base64",
+        "base64Data": "={{ $json.base64 }}",
+        "modelParameters": {},
+        "advancedOptions": {}
+      },
+      "type": "CUSTOM.genericLlmVision",
+      "typeVersion": 1,
+      "position": [
+        896,
+        272
+      ],
+      "id": "d9e84ea5-12ce-4fec-b8de-6d06461e91db",
+      "name": "Generic LLM Vision (BASE 64)",
+      "credentials": {
+        "genericLlmVisionApi": {
+          "id": "I8oGRkKW1GlKbhWT",
+          "name": "Generic LLM Vision - openrouter"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -147,7 +147,7 @@
       "main": [
         [
           {
-            "node": "Generic LLM Vision1",
+            "node": "Generic LLM Vision (BINARY)",
             "type": "main",
             "index": 0
           },
@@ -168,7 +168,7 @@
             "index": 0
           },
           {
-            "node": "Generic LLM Vision",
+            "node": "Generic LLM Vision (URL)",
             "type": "main",
             "index": 0
           }
@@ -179,7 +179,7 @@
       "main": [
         [
           {
-            "node": "Generic LLM Vision2",
+            "node": "Generic LLM Vision (BASE 64)",
             "type": "main",
             "index": 0
           }
@@ -192,7 +192,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "7315c0a8-4ec4-437b-b76c-44033004863f",
+  "versionId": "aee85d5b-695f-4c20-8904-ca517c26679f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "de418e501bf89674ab9c4074f5c315fac72e6a5e9a84ca669315e1a91d4a9ee6"
