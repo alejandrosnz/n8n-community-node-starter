@@ -39,7 +39,9 @@ export class OpenRouterApi implements ICredentialType {
     type: 'generic',
     properties: {
       headers: {
-        Authorization: '=Bearer {{$credentials.apiKey}}',
+        'Authorization': '=Bearer {{$credentials.apiKey}}',
+        'HTTP-Referer': '={{$credentials.httpReferer || ""}}',
+        'X-Title': '={{$credentials.appTitle || "n8n"}}',
       },
     },
   };

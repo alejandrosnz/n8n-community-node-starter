@@ -20,7 +20,7 @@ export class GenericLlmVisionApi implements ICredentialType {
         { name: 'Grok (X.AI)', value: 'grok' },
         { name: 'OpenAI', value: 'openai' },
         { name: 'Anthropic', value: 'anthropic' },
-        { name: 'Custom', value: 'custom' },
+        { name: 'Custom Provider', value: 'custom' },
       ],
       default: 'openai',
       required: true,
@@ -38,7 +38,7 @@ export class GenericLlmVisionApi implements ICredentialType {
       name: 'baseUrl',
       type: 'string',
       default: '',
-      placeholder: 'https://api.openai.com/v1',
+      placeholder: 'https://api.example.com/v1',
       description: 'Leave empty to use default URL for the selected provider',
       displayOptions: {
         show: { provider: ['custom'] },
@@ -50,14 +50,17 @@ export class GenericLlmVisionApi implements ICredentialType {
     type: 'generic',
     properties: {
       headers: {
-        Authorization: '=Bearer {{$credentials.apiKey}}',
+        'Authorization': '=Bearer {{$credentials.apiKey}}',
+        'x-api-key': '={{$credentials.provider === "anthropic" ? $credentials.apiKey : undefined}}',
+        'HTTP-Referer': '={{$credentials.provider === "openrouter" ? "https://n8n.io" : undefined}}',
+        'X-Title': '={{$credentials.provider === "openrouter" ? "n8n" : undefined}}',
       },
     },
   };
 
   test: ICredentialTestRequest = {
     request: {
-      baseURL: '={{ $credentials.provider === "openrouter" ? "https://openrouter.ai/api/v1" : $credentials.provider === "groq" ? "https://api.groq.com/openai/v1" : $credentials.provider === "grok" ? "https://api.x.ai/v1" : $credentials.provider === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1" }}',
+      baseURL: '={{ $credentials.baseUrl || ($credentials.provider === "openrouter" ? "https://openrouter.ai/api/v1" : $credentials.provider === "groq" ? "https://api.groq.com/openai/v1" : $credentials.provider === "grok" ? "https://api.x.ai/v1" : $credentials.provider === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1") }}',
       url: '/models',
     },
   };

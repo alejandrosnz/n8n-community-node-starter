@@ -4,15 +4,17 @@ import type {
   INodeType,
   INodeTypeDescription,
 } from 'n8n-workflow';
+import { prepareImage, getMimeTypeOptions } from './providers';
+import { buildRequest, extractAnalysis, extractMetadata, getHeadersWithAuth } from './GenericFunctions';
 
 export class GenericLlmVision implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'Generic LLM Vision',
     name: 'genericLlmVision',
-    icon: 'file:vision.svg', // Placeholder, user will provide
+    icon: 'file:vision.svg',
     group: ['transform'],
     version: 1,
-    subtitle: 'Analyze Image',
+    subtitle: '={{$parameter["model"] + " - " + $parameter["imageSource"]}}',
     description: 'Analyze images using multiple LLM vision providers (OpenRouter, Groq, Grok, OpenAI, Anthropic)',
     defaults: {
       name: 'Generic LLM Vision',
@@ -26,91 +28,116 @@ export class GenericLlmVision implements INodeType {
       },
     ],
     properties: [
-      // Model Selection
       {
         displayName: 'Model',
         name: 'model',
         type: 'string',
         required: true,
-        default: 'gpt-4o',
-        placeholder: 'gpt-4o',
-        description: 'Enter the model identifier for your selected provider',
+        default: 'gpt-4-vision',
+        placeholder: 'gpt-4-vision',
+        description: 'Model identifier for the selected provider (e.g., gpt-4-vision, claude-3-sonnet)',
       },
-      // Image Source
+
+      // Image Input Configuration
       {
         displayName: 'Image Source',
         name: 'imageSource',
         type: 'options',
         required: true,
         options: [
-          { name: 'Binary Data', value: 'binaryData' },
-          { name: 'URL', value: 'url' },
-          { name: 'Base64 String', value: 'base64' },
+          {
+            name: 'Binary Data (Uploaded File)',
+            value: 'binary',
+            description: 'Use file from previous node output',
+          },
+          {
+            name: 'Public URL',
+            value: 'url',
+            description: 'Provide image URL directly',
+          },
+          {
+            name: 'Base64 String',
+            value: 'base64',
+            description: 'Provide base64-encoded image data',
+          },
         ],
-        default: 'binaryData',
+        default: 'binary',
       },
-      // Binary Property Name
+
+      // Binary data options
       {
         displayName: 'Binary Property Name',
         name: 'binaryPropertyName',
         type: 'string',
         default: 'data',
-        description: 'Binary property name to read the image from',
+        description: 'The name of the binary property containing the image',
         displayOptions: {
-          show: { imageSource: ['binaryData'] },
+          show: { imageSource: ['binary'] },
         },
       },
-      // Image URL
+      {
+        displayName: 'Filename (Optional)',
+        name: 'filename',
+        type: 'string',
+        default: '',
+        description: 'Image filename (used for MIME type detection). If provided, overrides binary metadata',
+        displayOptions: {
+          show: { imageSource: ['binary'] },
+        },
+      },
+
+      // URL options
       {
         displayName: 'Image URL',
         name: 'imageUrl',
         type: 'string',
-        required: true,
         default: '',
-        description: 'Image URL',
+        required: true,
+        placeholder: 'https://example.com/image.jpg',
+        description: 'HTTP(S) URL pointing to the image',
         displayOptions: {
           show: { imageSource: ['url'] },
         },
       },
-      // Base64 Data
+
+      // Base64 options
       {
         displayName: 'Base64 Data',
         name: 'base64Data',
         type: 'string',
-        required: true,
         default: '',
-        description: 'Base64 encoded image data',
+        required: true,
+        description: 'Base64-encoded image data (without data: URI prefix)',
         displayOptions: {
           show: { imageSource: ['base64'] },
         },
       },
-      // Analysis Prompt
+      {
+        displayName: 'Image Format (for Base64)',
+        name: 'base64MimeType',
+        type: 'options',
+        noDataExpression: true,
+        options: getMimeTypeOptions(),
+        default: 'image/jpeg',
+        description: 'MIME type of the base64-encoded image. Auto-detected if possible',
+        displayOptions: {
+          show: { imageSource: ['base64'] },
+        },
+      },
+
+      // Analysis prompt
       {
         displayName: 'Prompt',
         name: 'prompt',
         type: 'string',
-        typeOptions: {
-          rows: 3,
-        },
+        typeOptions: { rows: 4 },
         required: true,
-        default: 'Describe what you see in this image',
-        description: 'What do you want to know about the image? Be specific.',
-        placeholder: 'Describe this image in detail, focusing on colors and composition',
+        default: 'Describe what you see in this image in detail',
+        description: 'Question or instruction for analyzing the image',
+        placeholder: 'Describe the main objects, colors, composition, and any text visible in this image',
       },
-      // Image Detail
-      {
-        displayName: 'Image Detail',
-        name: 'imageDetail',
-        type: 'options',
-        options: [
-          { name: 'Auto', value: 'auto' },
-          { name: 'Low', value: 'low' },
-          { name: 'High', value: 'high' },
-        ],
-        default: 'auto',
-        description: 'Image resolution for analysis (affects cost and speed)',
-      },
-      // Model Parameters (Collection)
+
+      // Model configuration
       {
         displayName: 'Model Parameters',
         name: 'modelParameters',
@@ -125,16 +152,17 @@ export class GenericLlmVision implements INodeType {
             typeOptions: {
               minValue: 0,
               maxValue: 2,
+              numberPrecision: 2,
             },
             default: 1,
-            description: 'Controls randomness. Lower = more focused, higher = more creative',
+            description: 'Controls randomness (0=deterministic, 2=most random)',
           },
           {
             displayName: 'Max Tokens',
             name: 'maxTokens',
             type: 'number',
-            default: 1000,
-            description: 'Maximum tokens in response',
+            default: 1024,
+            description: 'Maximum length of the response in tokens',
           },
           {
             displayName: 'Top P',
@@ -143,13 +171,27 @@ export class GenericLlmVision implements INodeType {
             typeOptions: {
               minValue: 0,
               maxValue: 1,
+              numberPrecision: 2,
             },
             default: 1,
-            description: 'Controls diversity via nucleus sampling',
+            description: 'Controls diversity via nucleus sampling (0-1)',
+          },
+          {
+            displayName: 'Image Detail',
+            name: 'imageDetail',
+            type: 'options',
+            options: [
+              { name: 'Auto', value: 'auto' },
+              { name: 'Low (Fast)', value: 'low' },
+              { name: 'High (Detailed)', value: 'high' },
+            ],
+            default: 'auto',
+            description: 'Image resolution detail level (affects speed and cost). Not supported by all providers',
           },
         ],
       },
-      // Advanced Options
+
+      // Advanced options
       {
         displayName: 'Advanced Options',
         name: 'advancedOptions',
@@ -161,11 +203,9 @@ export class GenericLlmVision implements INodeType {
             displayName: 'System Prompt',
             name: 'systemPrompt',
             type: 'string',
-            typeOptions: {
-              rows: 2,
-            },
+            typeOptions: { rows: 2 },
             default: '',
-            description: 'Additional context or instructions for the model',
+            description: 'System instructions for the model (overrides defaults)',
           },
           {
             displayName: 'Response Format',
@@ -173,18 +213,17 @@ export class GenericLlmVision implements INodeType {
             type: 'options',
             options: [
               { name: 'Text', value: 'text' },
-              { name: 'JSON Object', value: 'json_object' },
+              { name: 'JSON', value: 'json_object' },
             ],
             default: 'text',
+            description: 'Response format. Note: not all providers support JSON mode',
           },
           {
             displayName: 'Custom Headers',
             name: 'customHeaders',
             type: 'fixedCollection',
-            typeOptions: {
-              multipleValues: true,
-            },
-            description: 'Add custom headers to the request',
+            typeOptions: { multipleValues: true },
+            description: 'Additional headers to include in API request',
             default: {},
             options: [
               {
@@ -192,18 +231,18 @@ export class GenericLlmVision implements INodeType {
                 displayName: 'Headers',
                 values: [
                   {
-                    displayName: 'Name',
+                    displayName: 'Header Name',
                     name: 'name',
                     type: 'string',
                     default: '',
-                    description: 'Header name',
+                    placeholder: 'X-Custom-Header',
                   },
                   {
-                    displayName: 'Value',
+                    displayName: 'Header Value',
                     name: 'value',
                     type: 'string',
                     default: '',
-                    description: 'Header value',
+                    placeholder: 'custom-value',
                   },
                 ],
               },
@@ -213,25 +252,26 @@ export class GenericLlmVision implements INodeType {
             displayName: 'Additional Parameters',
             name: 'additionalParameters',
             type: 'json',
-            description: 'Advanced: Add custom parameters as JSON',
             default: '{}',
+            description: 'Extra API parameters as JSON (for advanced users)',
           },
         ],
       },
-      // Output Configuration
+
+      // Output configuration
       {
         displayName: 'Output Property Name',
         name: 'outputPropertyName',
         type: 'string',
         default: 'analysis',
-        description: 'Property name for the analysis result',
+        description: 'Property name for storing the analysis result',
       },
       {
         displayName: 'Include Metadata',
         name: 'includeMetadata',
         type: 'boolean',
         default: false,
-        description: 'Include metadata (usage, model, tokens, etc.)',
+        description: 'Include usage statistics and model information in output',
       },
     ],
   };
@@ -239,52 +279,116 @@ export class GenericLlmVision implements INodeType {
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
-    const credentials = await this.getCredentials('genericLlmVisionApi');
+
+    // Detect which credential is being used and get the appropriate one
+    let credentials: any;
+    let credentialName: string;
+    let apiKey: string;
+    let customBaseUrl: string | undefined;
+    let provider: string;
+
+    try {
+      credentials = await this.getCredentials('openRouterApi');
+      credentialName = 'openRouterApi';
+      provider = 'openrouter';
+      apiKey = credentials.apiKey as string;
+    } catch {
+      // openRouterApi not configured, try generic credential
+      credentials = await this.getCredentials('genericLlmVisionApi');
+      credentialName = 'genericLlmVisionApi';
+      provider = (credentials.provider as string) || 'openai';
+      apiKey = credentials.apiKey as string;
+      customBaseUrl = (credentials.baseUrl as string) || undefined;
+    }
 
     for (let i = 0; i < items.length; i++) {
       try {
-        const provider = credentials.provider as string;
-        const apiKey = credentials.apiKey as string;
-        let baseUrl = credentials.baseUrl as string || getDefaultBaseUrl(provider);
-
+        // Get node parameters
         const model = this.getNodeParameter('model', i) as string;
-        const imageSource = this.getNodeParameter('imageSource', i) as string;
+        const imageSource = this.getNodeParameter('imageSource', i) as 'binary' | 'base64' | 'url';
         const prompt = this.getNodeParameter('prompt', i) as string;
-        const imageDetail = this.getNodeParameter('imageDetail', i) as string;
         const modelParameters = this.getNodeParameter('modelParameters', i) as any;
         const advancedOptions = this.getNodeParameter('advancedOptions', i) as any;
         const outputPropertyName = this.getNodeParameter('outputPropertyName', i) as string;
         const includeMetadata = this.getNodeParameter('includeMetadata', i) as boolean;
 
-        // Validate and prepare image
-        const imageData = await prepareImage(imageSource, i, items, this.getNodeParameter.bind(this));
-        if (!imageData) {
-          throw new Error('Failed to prepare image data');
+        // Get image data
+        let imageData: any;
+        let filename: string | undefined;
+
+        if (imageSource === 'binary') {
+          const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+          filename = (this.getNodeParameter('filename', i) as string) || undefined;
+          const binaryData = items[i].binary?.[binaryPropertyName];
+
+          if (!binaryData) {
+            throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+          }
+
+          imageData = binaryData;
+        } else if (imageSource === 'url') {
+          imageData = this.getNodeParameter('imageUrl', i) as string;
+        } else {
+          imageData = this.getNodeParameter('base64Data', i) as string;
         }
 
-        // Validate image size (max 20MB)
-        const maxSize = 20 * 1024 * 1024; // 20MB
-        if (imageData.size > maxSize) {
-          throw new Error('Image size exceeds maximum allowed size of 20MB');
-        }
+        // Prepare image with smart MIME detection
+        const preparedImage = await prepareImage(imageSource, imageData, filename);
 
         // Build request
-        const headers = buildHeaders(provider, apiKey, advancedOptions.customHeaders);
-        const body = buildBody(provider, model, prompt, imageData.data, imageData.mimeType, imageDetail, modelParameters, advancedOptions);
-        const url = provider === 'anthropic' ? `${baseUrl}/messages` : `${baseUrl}/chat/completions`;
+        const customHeadersRecord: Record<string, string> = {};
 
+        if (advancedOptions?.customHeaders?.headers) {
+          for (const header of advancedOptions.customHeaders.headers) {
+            customHeadersRecord[header.name] = header.value;
+          }
+        }
+
+        // Add provider-specific headers if using OpenRouter credential
+        if (credentialName === 'openRouterApi') {
+          if (credentials.httpReferer) {
+            customHeadersRecord['HTTP-Referer'] = credentials.httpReferer as string;
+          }
+          if (credentials.appTitle) {
+            customHeadersRecord['X-Title'] = credentials.appTitle as string;
+          }
+        }
+
+        const requestOptions = {
+          provider,
+          model,
+          prompt,
+          image: preparedImage,
+          imageDetail: modelParameters?.imageDetail,
+          temperature: modelParameters?.temperature,
+          maxTokens: modelParameters?.maxTokens,
+          topP: modelParameters?.topP,
+          systemPrompt: advancedOptions?.systemPrompt,
+          responseFormat: advancedOptions?.responseFormat,
+          additionalParameters: advancedOptions?.additionalParameters
+            ? JSON.parse(advancedOptions.additionalParameters)
+            : undefined,
+        };
+
+        const { url, body } = buildRequest(requestOptions, customBaseUrl, customHeadersRecord);
+
+        // Inject API key into headers
+        const headers = getHeadersWithAuth(provider, apiKey, customHeadersRecord);
+
+        // Make request
         const response = await this.helpers.request({
           method: 'POST',
           url,
           headers,
           body: JSON.stringify(body),
           json: true,
-          timeout: 60000, // 60 seconds timeout
+          timeout: 60000,
         });
 
-        // Process response
+        // Extract and format response
         const analysis = extractAnalysis(provider, response);
         const result: any = {};
+
         if (includeMetadata) {
           result[outputPropertyName] = {
             analysis,
@@ -301,7 +405,10 @@ export class GenericLlmVision implements INodeType {
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({
-            json: { error: (error as Error).message },
+            json: {
+              error: (error as Error).message,
+              details: (error as Error).stack,
+            },
             binary: items[i].binary,
           });
           continue;
@@ -311,172 +418,5 @@ export class GenericLlmVision implements INodeType {
     }
 
     return [returnData];
-  }
-}
-
-// Helper functions
-function getDefaultBaseUrl(provider: string): string {
-  const urls: { [key: string]: string } = {
-    openrouter: 'https://openrouter.ai/api/v1',
-    groq: 'https://api.groq.com/openai/v1',
-    grok: 'https://api.x.ai/v1',
-    openai: 'https://api.openai.com/v1',
-    anthropic: 'https://api.anthropic.com/v1',
-  };
-  return urls[provider] || '';
-}
-
-function buildHeaders(provider: string, apiKey: string, customHeaders?: any[]): any {
-  const headers: any = {};
-
-  if (provider === 'anthropic') {
-    headers['x-api-key'] = apiKey;
-    headers['anthropic-version'] = '2023-06-01';
-  } else {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-
-  headers['Content-Type'] = 'application/json';
-
-  if (customHeaders) {
-    for (const header of customHeaders) {
-      headers[header.name] = header.value;
-    }
-  }
-
-  return headers;
-}
-
-function buildBody(provider: string, model: string, prompt: string, imageData: string, mimeType: string, imageDetail: string, modelParameters: any, advancedOptions: any): any {
-  const body: any = {
-    model,
-    ...modelParameters,
-  };
-
-  if (advancedOptions.responseFormat) {
-    body.response_format = { type: advancedOptions.responseFormat };
-  }
-
-  if (provider === 'anthropic') {
-    body.messages = [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: mimeType === 'url' ? 'url' : 'base64',
-              media_type: mimeType === 'url' ? undefined : mimeType,
-              data: mimeType === 'url' ? imageData : imageData,
-            },
-          },
-          {
-            type: 'text',
-            text: prompt,
-          },
-        ],
-      },
-    ];
-    if (advancedOptions.systemPrompt) {
-      body.system = advancedOptions.systemPrompt;
-    }
-  } else {
-    body.messages = [];
-    if (advancedOptions.systemPrompt) {
-      body.messages.push({
-        role: 'system',
-        content: advancedOptions.systemPrompt,
-      });
-    }
-    body.messages.push({
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: prompt,
-        },
-        {
-          type: 'image_url',
-          image_url: {
-            url: mimeType === 'url' ? imageData : `data:${mimeType};base64,${imageData}`,
-            detail: imageDetail,
-          },
-        },
-      ],
-    });
-  }
-
-  if (advancedOptions.additionalParameters) {
-    Object.assign(body, JSON.parse(advancedOptions.additionalParameters));
-  }
-
-  return body;
-}
-
-// Helper functions
-function extractAnalysis(provider: string, response: any): string {
-  if (provider === 'anthropic') {
-    return response.content?.[0]?.text || '';
-  } else {
-    return response.choices?.[0]?.message?.content || '';
-  }
-}
-
-function extractMetadata(response: any): any {
-  return {
-    model: response.model,
-    usage: response.usage,
-    finish_reason: response.choices?.[0]?.finish_reason,
-  };
-}
-
-export async function prepareImage(imageSource: string, itemIndex: number, items: any[], getNodeParameter: any): Promise<{ data: string; mimeType: string; size: number } | null> {
-  if (imageSource === 'binaryData') {
-    const binaryPropertyName = getNodeParameter('binaryPropertyName', itemIndex) as string;
-    const binaryData = items[itemIndex].binary[binaryPropertyName];
-    if (!binaryData) {
-      throw new Error(`No binary data found in property '${binaryPropertyName}'`);
-    }
-    // Validate MIME type
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedMimes.includes(binaryData.mimeType)) {
-      throw new Error(`Unsupported image format: ${binaryData.mimeType}. Supported formats: JPEG, PNG, WebP, GIF`);
-    }
-    const buffer = Buffer.from(binaryData.data, 'base64');
-    return {
-      data: buffer.toString('base64'),
-      mimeType: binaryData.mimeType,
-      size: buffer.length,
-    };
-  } else if (imageSource === 'url') {
-    const imageUrl = getNodeParameter('imageUrl', itemIndex) as string;
-    // Basic URL validation
-    try {
-      new URL(imageUrl);
-    } catch {
-      throw new Error('Invalid image URL provided');
-    }
-    // Sanitize URL (basic)
-    const sanitizedUrl = imageUrl.trim();
-    if (sanitizedUrl.includes('<script') || sanitizedUrl.includes('javascript:')) {
-      throw new Error('Potentially unsafe URL detected');
-    }
-    return {
-      data: sanitizedUrl,
-      mimeType: 'url',
-      size: sanitizedUrl.length, // Approximate
-    };
-  } else {
-    const base64Data = getNodeParameter('base64Data', itemIndex) as string;
-    // Basic base64 validation
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-      throw new Error('Invalid base64 data provided');
-    }
-    const buffer = Buffer.from(base64Data, 'base64');
-    return {
-      data: base64Data,
-      mimeType: 'image/jpeg', // Assume JPEG for base64
-      size: buffer.length,
-    };
   }
 }
