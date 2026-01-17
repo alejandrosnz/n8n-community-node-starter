@@ -153,6 +153,8 @@ export const PROVIDERS: Record<ProviderType, ProviderConfig> = {
 
 /**
  * Get provider configuration
+ * @param provider - Provider name or type
+ * @returns ProviderConfig - Configuration object for the provider
  */
 export function getProvider(provider: ProviderType | string): ProviderConfig {
   const normalizedProvider = (provider || 'openai').toLowerCase() as ProviderType;
@@ -161,6 +163,9 @@ export function getProvider(provider: ProviderType | string): ProviderConfig {
 
 /**
  * Get complete API endpoint URL
+ * @param provider - Provider name
+ * @param baseUrl - Optional custom base URL
+ * @returns string - Full API endpoint URL
  */
 export function getApiUrl(provider: ProviderType | string, baseUrl?: string): string {
   const config = getProvider(provider);
@@ -170,6 +175,10 @@ export function getApiUrl(provider: ProviderType | string, baseUrl?: string): st
 
 /**
  * Get headers for provider
+ * @param provider - Provider name
+ * @param apiKey - API key (will be injected into headers)
+ * @param customHeaders - Additional custom headers
+ * @returns Record<string, string> - Complete headers object
  */
 export function getHeaders(provider: ProviderType | string, apiKey: string, customHeaders?: Record<string, string>): Record<string, string> {
   const config = getProvider(provider);
@@ -185,6 +194,8 @@ export function getHeaders(provider: ProviderType | string, apiKey: string, cust
 
 /**
  * Detect MIME type from file extension
+ * @param filename - Filename with extension
+ * @returns string | null - MIME type or null if not detected
  */
 export function detectMimeTypeFromExtension(filename: string): string | null {
   if (!filename) return null;
@@ -204,6 +215,8 @@ export function detectMimeTypeFromExtension(filename: string): string | null {
 
 /**
  * Detect MIME type from base64 magic bytes
+ * @param base64Data - Base64 encoded image data
+ * @returns string | null - MIME type or null if not detected
  */
 export function detectMimeTypeFromBase64(base64Data: string): string | null {
   try {
@@ -236,6 +249,8 @@ export function detectMimeTypeFromBase64(base64Data: string): string | null {
 
 /**
  * Validate if MIME type is supported
+ * @param mimeType - MIME type to check
+ * @returns boolean - True if supported
  */
 export function isSupportedMimeType(mimeType: string): boolean {
   return Object.values(SUPPORTED_MIME_TYPES).some(config => config.mimeType === mimeType);
@@ -243,6 +258,7 @@ export function isSupportedMimeType(mimeType: string): boolean {
 
 /**
  * Get all supported MIME types
+ * @returns string[] - Array of supported MIME types
  */
 export function getSupportedMimeTypes(): string[] {
   return Object.values(SUPPORTED_MIME_TYPES).map(config => config.mimeType);
@@ -250,6 +266,8 @@ export function getSupportedMimeTypes(): string[] {
 
 /**
  * Validate base64 format
+ * @param data - String to validate
+ * @returns boolean - True if valid base64
  */
 export function isValidBase64(data: string): boolean {
   try {
@@ -261,6 +279,7 @@ export function isValidBase64(data: string): boolean {
 
 /**
  * Get provider list for options
+ * @returns Array of provider options for UI dropdown
  */
 export function getProviderOptions() {
   return Object.values(PROVIDERS)
@@ -285,6 +304,12 @@ export function getProviderOptions() {
 
 /**
  * Prepare image from different sources (binary, base64, URL)
+ * Validates format, size, and MIME type with smart detection
+ * @param source - Image source type
+ * @param imageData - Image data (varies by source)
+ * @param filename - Optional filename for MIME detection
+ * @returns Promise<PreparedImage> - Validated and prepared image object
+ * @throws Error if image is invalid, unsupported, or too large
  */
 export async function prepareImage(
   source: 'binary' | 'base64' | 'url',
@@ -497,6 +522,7 @@ export async function prepareImage(
 
 /**
  * Get MIME type options for user selection (when auto-detection fails)
+ * @returns Array of MIME type options for UI dropdown
  */
 export function getMimeTypeOptions() {
   return Object.values(SUPPORTED_MIME_TYPES).map(config => ({

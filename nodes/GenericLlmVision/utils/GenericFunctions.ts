@@ -27,6 +27,10 @@ export interface RequestBuilt {
 
 /**
  * Build complete request for OpenAI-compatible providers
+ * @param options - Request configuration options
+ * @param baseUrl - Optional custom base URL
+ * @param customHeaders - Additional headers to include
+ * @returns RequestBuilt - Complete request configuration
  */
 export function buildOpenAiRequest(
   options: RequestBuildOptions,
@@ -110,6 +114,10 @@ export function buildOpenAiRequest(
 
 /**
  * Build complete request for Anthropic provider
+ * @param options - Request configuration options
+ * @param baseUrl - Optional custom base URL
+ * @param customHeaders - Additional headers to include
+ * @returns RequestBuilt - Complete request configuration
  */
 export function buildAnthropicRequest(
   options: RequestBuildOptions,
@@ -181,6 +189,10 @@ export function buildAnthropicRequest(
 
 /**
  * Build request based on provider type
+ * @param options - Request configuration options
+ * @param baseUrl - Optional custom base URL
+ * @param customHeaders - Additional headers to include
+ * @returns RequestBuilt - Complete request configuration
  */
 export function buildRequest(
   options: RequestBuildOptions,
@@ -198,6 +210,8 @@ export function buildRequest(
 
 /**
  * Extract analysis from OpenAI response
+ * @param response - Raw API response from OpenAI-compatible provider
+ * @returns string - Extracted analysis text
  */
 export function extractOpenAiAnalysis(response: any): string {
   return response.choices?.[0]?.message?.content || '';
@@ -205,6 +219,8 @@ export function extractOpenAiAnalysis(response: any): string {
 
 /**
  * Extract analysis from Anthropic response
+ * @param response - Raw API response from Anthropic
+ * @returns string - Extracted analysis text
  */
 export function extractAnthropicAnalysis(response: any): string {
   return response.content?.[0]?.text || '';
@@ -212,6 +228,9 @@ export function extractAnthropicAnalysis(response: any): string {
 
 /**
  * Extract analysis based on provider response format
+ * @param provider - Provider name (e.g., 'openai', 'anthropic')
+ * @param response - Raw API response
+ * @returns string - Extracted analysis text
  */
 export function extractAnalysis(provider: string, response: any): string {
   const providerConfig = getProvider(provider);
@@ -225,6 +244,8 @@ export function extractAnalysis(provider: string, response: any): string {
 
 /**
  * Extract metadata from response
+ * @param response - Raw API response
+ * @returns Record<string, any> - Metadata object with usage stats and model info
  */
 export function extractMetadata(response: any): Record<string, any> {
   return {
@@ -239,6 +260,10 @@ export function extractMetadata(response: any): Record<string, any> {
 
 /**
  * Get headers with API key injected
+ * @param provider - Provider name
+ * @param apiKey - API key for authentication
+ * @param customHeaders - Additional custom headers
+ * @returns Record<string, string> - Complete headers object
  */
 export function getHeadersWithAuth(
   provider: string,

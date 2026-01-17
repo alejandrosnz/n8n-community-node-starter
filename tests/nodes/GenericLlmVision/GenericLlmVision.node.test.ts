@@ -8,8 +8,8 @@ import {
   getProvider,
   getHeaders,
   prepareImage,
-} from '../../../nodes/GenericLlmVision/providers';
-import { buildRequest, extractAnalysis, extractMetadata } from '../../../nodes/GenericLlmVision/GenericFunctions';
+} from '../../../nodes/GenericLlmVision/utils/providers';
+import { buildRequest, extractAnalysis, extractMetadata } from '../../../nodes/GenericLlmVision/utils/GenericFunctions';
 
 describe('GenericLlmVision Node', () => {
   let node: GenericLlmVision;

@@ -4,8 +4,10 @@ import type {
   INodeType,
   INodeTypeDescription,
 } from 'n8n-workflow';
-import { prepareImage, getMimeTypeOptions, PreparedImage } from './providers';
-import { buildRequest, extractAnalysis, extractMetadata, getHeadersWithAuth } from './GenericFunctions';
+import { ImageProcessor } from './processors/ImageProcessor';
+import { ResponseProcessor } from './processors/ResponseProcessor';
+import { RequestHandler } from './handlers/RequestHandler';
+import { getMimeTypeOptions } from './utils/providers';
 
 export class GenericLlmVision implements INodeType {
   description: INodeTypeDescription = {
@@ -276,11 +278,18 @@ export class GenericLlmVision implements INodeType {
     ],
   };
 
+  /**
+   * Execute the Generic LLM Vision node
+   * Processes images through various LLM vision providers (OpenAI, Anthropic, Groq, etc.)
+   * @param this - The execution context provided by n8n
+   * @returns Promise<INodeExecutionData[][]> - Array of processed items with analysis results
+   */
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
 
     // Detect which credential is being used and get the appropriate one
+    // First try OpenRouter credential, then fall back to generic credential
     let credentials: any;
     let credentialName: string;
     let apiKey: string;
@@ -293,7 +302,7 @@ export class GenericLlmVision implements INodeType {
       provider = 'openrouter';
       apiKey = credentials.apiKey as string;
     } catch {
-      // openRouterApi not configured, try generic credential
+      // OpenRouter credential not configured, try generic credential
       credentials = await this.getCredentials('genericLlmVisionApi');
       credentialName = 'genericLlmVisionApi';
       provider = (credentials.provider as string) || 'openai';
@@ -301,85 +310,22 @@ export class GenericLlmVision implements INodeType {
       customBaseUrl = (credentials.baseUrl as string) || undefined;
     }
 
+    // Process each input item
     for (let i = 0; i < items.length; i++) {
       try {
-        // Get node parameters
+        // Extract node parameters for this item
         const model = this.getNodeParameter('model', i) as string;
-        const imageSource = this.getNodeParameter('imageSource', i) as 'binary' | 'base64' | 'url';
         const prompt = this.getNodeParameter('prompt', i) as string;
         const modelParameters = this.getNodeParameter('modelParameters', i) as any;
         const advancedOptions = this.getNodeParameter('advancedOptions', i) as any;
         const outputPropertyName = this.getNodeParameter('outputPropertyName', i) as string;
         const includeMetadata = this.getNodeParameter('includeMetadata', i) as boolean;
 
-        // Get image data
-        let imageData: any;
-        let filename: string | undefined;
+        // Prepare image data using ImageProcessor
+        const imageProcessor = new ImageProcessor(this);
+        const preparedImage = await imageProcessor.getPreparedImage(i);
 
-        if (imageSource === 'binary') {
-          const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
-          filename = (this.getNodeParameter('filename', i) as string) || undefined;
-          const binaryMeta = items[i].binary?.[binaryPropertyName];
-
-          if (!binaryMeta) {
-            const binaryProps = items[i].binary;
-            const availableBinaryProps = binaryProps ? Object.keys(binaryProps).join(', ') : 'none';
-            
-            throw new Error(
-              `No binary data found in property '${binaryPropertyName}'. ` +
-              `Available binary properties: [${availableBinaryProps}]. ` +
-              `\n\nMake sure:` +
-              `\n1. Previous node outputs binary data` +
-              `\n2. Binary property name is correct (default: 'data')`
-            );
-          }
-
-          // Get the binary data buffer safely using n8n helper
-          let binaryDataBuffer: Buffer;
-          
-          try {
-            binaryDataBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-          } catch (error) {
-            throw new Error(
-              `Failed to read binary data: ${(error as Error).message}. ` +
-              `The binary data may be corrupted or inaccessible.`
-            );
-          }
-
-          if (!binaryDataBuffer || binaryDataBuffer.length === 0) {
-            throw new Error('Binary data buffer is empty. The image file appears to be empty.');
-          }
-
-          // Convertir buffer a base64
-          const base64Data = binaryDataBuffer.toString('base64');
-
-          // Crear objeto con estructura esperada por prepareImage
-          imageData = {
-            data: base64Data,
-            mimeType: binaryMeta.mimeType || 'image/jpeg',
-            fileName: binaryMeta.fileName || filename,
-          };
-
-        } else if (imageSource === 'url') {
-          imageData = this.getNodeParameter('imageUrl', i) as string;
-        } else {
-          // base64
-          imageData = this.getNodeParameter('base64Data', i) as string;
-        }
-
-        // Prepare image with smart MIME detection
-        let preparedImage: PreparedImage;
-        
-        try {
-          preparedImage = await prepareImage(imageSource, imageData, filename);
-        } catch (error) {
-          throw new Error(
-            `Failed to prepare image: ${(error as Error).message}\n\n` +
-            `Image source: ${imageSource}`
-          );
-        }
-
-        // Build request
+        // Build custom headers
         const customHeadersRecord: Record<string, string> = {};
 
         if (advancedOptions?.customHeaders?.headers) {
@@ -398,49 +344,23 @@ export class GenericLlmVision implements INodeType {
           }
         }
 
-        const requestOptions = {
+        // Execute request using RequestHandler
+        const requestHandler = new RequestHandler(this);
+        const response = await requestHandler.executeRequest(
           provider,
+          apiKey,
+          customBaseUrl,
+          customHeadersRecord,
           model,
+          preparedImage,
           prompt,
-          image: preparedImage,
-          imageDetail: modelParameters?.imageDetail,
-          temperature: modelParameters?.temperature,
-          maxTokens: modelParameters?.maxTokens,
-          topP: modelParameters?.topP,
-          systemPrompt: advancedOptions?.systemPrompt,
-          responseFormat: advancedOptions?.responseFormat,
-          additionalParameters: advancedOptions?.additionalParameters
-            ? JSON.parse(advancedOptions.additionalParameters)
-            : undefined,
-        };
+          modelParameters,
+          advancedOptions
+        );
 
-        const { url, body } = buildRequest(requestOptions, customBaseUrl, customHeadersRecord);
-
-        // Inject API key into headers
-        const headers = getHeadersWithAuth(provider, apiKey, customHeadersRecord);
-
-        // Make request
-        const response = await this.helpers.request({
-          method: 'POST',
-          url,
-          headers,
-          body: JSON.stringify(body),
-          json: true,
-          timeout: 60000,
-        });
-
-        // Extract and format response
-        const analysis = extractAnalysis(provider, response);
-        const result: any = {};
-
-        if (includeMetadata) {
-          result[outputPropertyName] = {
-            analysis,
-            metadata: extractMetadata(response),
-          };
-        } else {
-          result[outputPropertyName] = analysis;
-        }
+        // Process response using ResponseProcessor
+        const responseProcessor = new ResponseProcessor();
+        const result = responseProcessor.processResponse(response, provider, includeMetadata, outputPropertyName);
 
         returnData.push({
           json: { ...items[i].json, ...result },
