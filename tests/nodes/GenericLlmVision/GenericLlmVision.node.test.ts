@@ -850,9 +850,8 @@ describe('Integration Tests - Execute Method', () => {
         case 'imageSource': return 'binary';
         case 'prompt': return 'Describe this image';
         case 'modelParameters': return {};
-        case 'advancedOptions': return {};
+        case 'advancedOptions': return { includeMetadata: false };
         case 'outputPropertyName': return 'analysis';
-        case 'includeMetadata': return false;
         case 'binaryPropertyName': return 'data';
         case 'filename': return 'test.jpg';
         default: return undefined;
@@ -911,9 +910,8 @@ describe('Integration Tests - Execute Method', () => {
         case 'imageSource': return 'binary';
         case 'prompt': return 'Describe this image';
         case 'modelParameters': return {};
-        case 'advancedOptions': return {};
+        case 'advancedOptions': return { includeMetadata: false };
         case 'outputPropertyName': return 'analysis';
-        case 'includeMetadata': return false;
         case 'binaryPropertyName': return 'data';
         case 'filename': return 'test.jpg';
         default: return undefined;
@@ -964,9 +962,8 @@ describe('Integration Tests - Execute Method', () => {
         case 'imageSource': return 'binary';
         case 'prompt': return 'Describe this image';
         case 'modelParameters': return {};
-        case 'advancedOptions': return {};
+        case 'advancedOptions': return { includeMetadata: false };
         case 'outputPropertyName': return 'analysis';
-        case 'includeMetadata': return false;
         case 'binaryPropertyName': return 'data';
         case 'filename': return 'test.jpg';
         default: return undefined;
@@ -1011,9 +1008,9 @@ describe('Integration Tests - Execute Method', () => {
         case 'imageSource': return 'binary';
         case 'prompt': return 'Describe this image';
         case 'modelParameters': return {};
-        case 'advancedOptions': return {};
+        case 'advancedOptions': return { includeMetadata: false };
         case 'outputPropertyName': return 'analysis';
-        case 'includeMetadata': return false;
+        
         case 'binaryPropertyName': return 'data';
         case 'filename': return 'test.jpg';
         default: return undefined;
@@ -1070,9 +1067,9 @@ describe('Integration Tests - Execute Method', () => {
         case 'imageSource': return 'binary';
         case 'prompt': return 'Describe this image';
         case 'modelParameters': return {};
-        case 'advancedOptions': return {};
+        case 'advancedOptions': return { includeMetadata: false };
         case 'outputPropertyName': return 'analysis';
-        case 'includeMetadata': return false;
+        
         case 'binaryPropertyName': return 'data';
         case 'filename': return 'test.jpg';
         default: return undefined;

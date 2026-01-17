@@ -257,6 +257,13 @@ export class GenericLlmVision implements INodeType {
             default: '{}',
             description: 'Extra API parameters as JSON (for advanced users)',
           },
+          {
+            displayName: 'Include Metadata',
+            name: 'includeMetadata',
+            type: 'boolean',
+            default: false,
+            description: 'Include usage statistics and model information in output',
+          },
         ],
       },
 
@@ -267,13 +274,6 @@ export class GenericLlmVision implements INodeType {
         type: 'string',
         default: 'analysis',
         description: 'Property name for storing the analysis result',
-      },
-      {
-        displayName: 'Include Metadata',
-        name: 'includeMetadata',
-        type: 'boolean',
-        default: false,
-        description: 'Include usage statistics and model information in output',
       },
     ],
   };
@@ -319,7 +319,7 @@ export class GenericLlmVision implements INodeType {
         const modelParameters = this.getNodeParameter('modelParameters', i) as any;
         const advancedOptions = this.getNodeParameter('advancedOptions', i) as any;
         const outputPropertyName = this.getNodeParameter('outputPropertyName', i) as string;
-        const includeMetadata = this.getNodeParameter('includeMetadata', i) as boolean;
+        const includeMetadata = advancedOptions.includeMetadata || false;
 
         // Prepare image data using ImageProcessor
         const imageProcessor = new ImageProcessor(this);
