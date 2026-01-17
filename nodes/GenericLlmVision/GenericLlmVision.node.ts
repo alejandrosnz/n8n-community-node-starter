@@ -7,7 +7,7 @@ import type {
 import { ImageProcessor } from './processors/ImageProcessor';
 import { ResponseProcessor } from './processors/ResponseProcessor';
 import { RequestHandler } from './handlers/RequestHandler';
-import { getMimeTypeOptions } from './utils/providers';
+import { getMimeTypeOptions } from './processors/ImageProcessor';
 
 export class GenericLlmVision implements INodeType {
   description: INodeTypeDescription = {

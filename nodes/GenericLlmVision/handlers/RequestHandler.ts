@@ -1,5 +1,5 @@
 import type { IExecuteFunctions } from 'n8n-workflow';
-import type { PreparedImage } from '../utils/providers';
+import type { PreparedImage } from '../processors/ImageProcessor';
 import { buildRequest, getHeadersWithAuth } from '../utils/GenericFunctions';
 
 /**

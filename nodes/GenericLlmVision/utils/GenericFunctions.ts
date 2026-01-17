@@ -2,7 +2,7 @@
  * Generic helper functions for request building and response parsing
  */
 
-import type { PreparedImage } from './providers';
+import type { PreparedImage } from '../processors/ImageProcessor';
 import { getHeaders, getApiUrl, getProvider } from './providers';
 
 export interface RequestBuildOptions {

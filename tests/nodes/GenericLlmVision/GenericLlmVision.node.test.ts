@@ -5,10 +5,9 @@ import {
   isSupportedMimeType,
   isValidBase64,
   getSupportedMimeTypes,
-  getProvider,
-  getHeaders,
   prepareImage,
-} from '../../../nodes/GenericLlmVision/utils/providers';
+} from '../../../nodes/GenericLlmVision/processors/ImageProcessor';
+import { getProvider, getHeaders } from '../../../nodes/GenericLlmVision/utils/providers';
 import { buildRequest, extractAnalysis, extractMetadata } from '../../../nodes/GenericLlmVision/utils/GenericFunctions';
 
 describe('GenericLlmVision Node', () => {
