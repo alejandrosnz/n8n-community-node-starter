@@ -52,8 +52,6 @@ export class GenericLlmVisionApi implements ICredentialType {
       headers: {
         'Authorization': '=Bearer {{$credentials.apiKey}}',
         'x-api-key': '={{$credentials.provider === "anthropic" ? $credentials.apiKey : undefined}}',
-        'HTTP-Referer': '={{$credentials.provider === "openrouter" ? "https://n8n.io" : undefined}}',
-        'X-Title': '={{$credentials.provider === "openrouter" ? "n8n" : undefined}}',
       },
     },
   };
