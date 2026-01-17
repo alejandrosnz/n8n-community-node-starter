@@ -285,7 +285,6 @@ export function getProviderOptions() {
 
 /**
  * Prepare image from different sources (binary, base64, URL)
- * Handles MIME type detection from filenames or magic bytes
  */
 export async function prepareImage(
   source: 'binary' | 'base64' | 'url',
@@ -295,23 +294,97 @@ export async function prepareImage(
   const maxSize = 20 * 1024 * 1024; // 20MB
 
   if (source === 'binary') {
-    if (!imageData?.data || !imageData?.mimeType) {
-      throw new Error('Invalid binary data: missing data or mimeType');
+    if (!imageData) {
+      throw new Error('Binary data is undefined or null. Make sure the previous node is outputting binary data.');
     }
 
-    // Detect MIME type from filename first, then validate
-    const detectedFromFilename = filename ? detectMimeTypeFromExtension(filename) : null;
-    const detectedMimeType = detectedFromFilename || imageData.mimeType;
-
-    if (!isSupportedMimeType(detectedMimeType)) {
+    const availableProps = Object.keys(imageData).join(', ');
+    
+    if (!imageData.data) {
       throw new Error(
-        `Unsupported image format: ${detectedMimeType}. Supported: ${getSupportedMimeTypes().join(', ')}`,
+        `Binary data object is missing 'data' property. ` +
+        `Available properties: [${availableProps}]. ` +
+        `This usually means the binary property name is incorrect or the previous node didn't output binary data.`
       );
     }
 
-    const buffer = Buffer.from(imageData.data, 'base64');
+    if (!imageData.mimeType) {
+      throw new Error(
+        `Binary data object is missing 'mimeType' property. ` +
+        `Available properties: [${availableProps}]. ` +
+        `The previous node may not be setting the MIME type correctly.`
+      );
+    }
+
+    // Ensure data is not empty
+    if (!imageData.data || imageData.data.length === 0) {
+      throw new Error(
+        `Binary data 'data' property is empty. ` +
+        `Make sure the previous node is actually outputting image data.`
+      );
+    }
+
+    // Try to detect MIME type from filename first
+    let detectedMimeType = imageData.mimeType;
+    
+    if (filename) {
+      const filenameBasedMime = detectMimeTypeFromExtension(filename);
+      if (filenameBasedMime) {
+        detectedMimeType = filenameBasedMime;
+      }
+    } else if (imageData.fileName) {
+      // Si no se proporcionó filename pero existe en los metadatos binarios
+      const filenameBasedMime = detectMimeTypeFromExtension(imageData.fileName);
+      if (filenameBasedMime) {
+        detectedMimeType = filenameBasedMime;
+      }
+    }
+
+    // Verify MIME type
+    if (!isSupportedMimeType(detectedMimeType)) {
+      throw new Error(
+        `Unsupported image format: ${detectedMimeType}. ` +
+        `Supported formats: ${getSupportedMimeTypes().join(', ')}. ` +
+        `If the MIME type is incorrect, try providing a filename with the correct extension.`
+      );
+    }
+
+    // Verify base64 decoding and get size
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(imageData.data, 'base64');
+    } catch (error) {
+      throw new Error(
+        `Failed to decode binary data as base64. ` +
+        `The 'data' field may be corrupted or in an unexpected format. ` +
+        `Error: ${(error as Error).message}`
+      );
+    }
+
+    // Verificar tamaño
+    if (buffer.length === 0) {
+      throw new Error(
+        `Binary data decoded to 0 bytes. The image data appears to be empty or corrupted.`
+      );
+    }
+
     if (buffer.length > maxSize) {
-      throw new Error(`Image size exceeds maximum of 20MB (got ${(buffer.length / 1024 / 1024).toFixed(2)}MB)`);
+      throw new Error(
+        `Image size exceeds maximum of 20MB ` +
+        `(got ${(buffer.length / 1024 / 1024).toFixed(2)}MB). ` +
+        `Try compressing the image or using a smaller resolution.`
+      );
+    }
+
+    // Verify magic bytes to confirm image type
+    const detectedFromMagicBytes = detectMimeTypeFromBase64(imageData.data);
+    if (detectedFromMagicBytes && detectedFromMagicBytes !== detectedMimeType) {
+      console.warn(
+        `Warning: MIME type mismatch. ` +
+        `Metadata says ${detectedMimeType} but magic bytes indicate ${detectedFromMagicBytes}. ` +
+        `Using magic bytes detection.`
+      );
+      detectedMimeType = detectedFromMagicBytes;
     }
 
     return {
@@ -324,16 +397,29 @@ export async function prepareImage(
 
   if (source === 'base64') {
     if (typeof imageData !== 'string') {
-      throw new Error('Base64 data must be a string');
+      throw new Error(`Base64 data must be a string, got ${typeof imageData}`);
+    }
+
+    if (!imageData || imageData.length === 0) {
+      throw new Error('Base64 data is empty');
     }
 
     if (!isValidBase64(imageData)) {
-      throw new Error('Invalid base64 format');
+      throw new Error(
+        'Invalid base64 format. Make sure the data is properly base64-encoded without any data URI prefix.'
+      );
     }
 
     const buffer = Buffer.from(imageData, 'base64');
+    
+    if (buffer.length === 0) {
+      throw new Error('Base64 data decoded to 0 bytes');
+    }
+
     if (buffer.length > maxSize) {
-      throw new Error(`Image size exceeds maximum of 20MB (got ${(buffer.length / 1024 / 1024).toFixed(2)}MB)`);
+      throw new Error(
+        `Image size exceeds maximum of 20MB (got ${(buffer.length / 1024 / 1024).toFixed(2)}MB)`
+      );
     }
 
     // Auto-detect MIME type from magic bytes
@@ -346,14 +432,15 @@ export async function prepareImage(
 
     if (!mimeType) {
       throw new Error(
-        'Could not detect image format. Please provide filename or ensure valid image data. ' +
-        `Supported: ${getSupportedMimeTypes().join(', ')}`,
+        'Could not detect image format from the data. ' +
+        'Please provide a filename with extension or ensure the image data is valid. ' +
+        `Supported formats: ${getSupportedMimeTypes().join(', ')}`
       );
     }
 
     if (!isSupportedMimeType(mimeType)) {
       throw new Error(
-        `Unsupported image format: ${mimeType}. Supported: ${getSupportedMimeTypes().join(', ')}`,
+        `Unsupported image format: ${mimeType}. Supported: ${getSupportedMimeTypes().join(', ')}`
       );
     }
 
@@ -367,20 +454,34 @@ export async function prepareImage(
 
   if (source === 'url') {
     if (typeof imageData !== 'string') {
-      throw new Error('URL data must be a string');
+      throw new Error(`URL data must be a string, got ${typeof imageData}`);
+    }
+
+    if (!imageData || imageData.trim().length === 0) {
+      throw new Error('Image URL is empty');
     }
 
     // Validate URL
     try {
       new URL(imageData);
-    } catch {
-      throw new Error('Invalid image URL provided');
+    } catch (error) {
+      throw new Error(
+        `Invalid image URL: "${imageData}". ` +
+        `Make sure it's a valid HTTP(S) URL. Error: ${(error as Error).message}`
+      );
     }
 
     // Basic security checks
     const sanitizedUrl = imageData.trim();
     if (sanitizedUrl.toLowerCase().includes('<script') || sanitizedUrl.toLowerCase().includes('javascript:')) {
-      throw new Error('Potentially unsafe URL detected');
+      throw new Error('Potentially unsafe URL detected (contains script or javascript)');
+    }
+
+    // Check protocol (only allow http and https)
+    if (!sanitizedUrl.toLowerCase().startsWith('http://') && !sanitizedUrl.toLowerCase().startsWith('https://')) {
+      throw new Error(
+        `Image URL must start with http:// or https://. Got: ${sanitizedUrl.substring(0, 20)}...`
+      );
     }
 
     return {
@@ -391,7 +492,7 @@ export async function prepareImage(
     };
   }
 
-  throw new Error('Unknown image source type');
+  throw new Error(`Unknown image source type: ${source}. Must be 'binary', 'base64', or 'url'`);
 }
 
 /**

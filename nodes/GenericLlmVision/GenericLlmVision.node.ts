@@ -4,7 +4,7 @@ import type {
   INodeType,
   INodeTypeDescription,
 } from 'n8n-workflow';
-import { prepareImage, getMimeTypeOptions } from './providers';
+import { prepareImage, getMimeTypeOptions, PreparedImage } from './providers';
 import { buildRequest, extractAnalysis, extractMetadata, getHeadersWithAuth } from './GenericFunctions';
 
 export class GenericLlmVision implements INodeType {
@@ -319,21 +319,65 @@ export class GenericLlmVision implements INodeType {
         if (imageSource === 'binary') {
           const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
           filename = (this.getNodeParameter('filename', i) as string) || undefined;
-          const binaryData = items[i].binary?.[binaryPropertyName];
+          const binaryMeta = items[i].binary?.[binaryPropertyName];
 
-          if (!binaryData) {
-            throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+          if (!binaryMeta) {
+            const binaryProps = items[i].binary;
+            const availableBinaryProps = binaryProps ? Object.keys(binaryProps).join(', ') : 'none';
+            
+            throw new Error(
+              `No binary data found in property '${binaryPropertyName}'. ` +
+              `Available binary properties: [${availableBinaryProps}]. ` +
+              `\n\nMake sure:` +
+              `\n1. Previous node outputs binary data` +
+              `\n2. Binary property name is correct (default: 'data')`
+            );
           }
 
-          imageData = binaryData;
+          // Get the binary data buffer safely using n8n helper
+          let binaryDataBuffer: Buffer;
+          
+          try {
+            binaryDataBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+          } catch (error) {
+            throw new Error(
+              `Failed to read binary data: ${(error as Error).message}. ` +
+              `The binary data may be corrupted or inaccessible.`
+            );
+          }
+
+          if (!binaryDataBuffer || binaryDataBuffer.length === 0) {
+            throw new Error('Binary data buffer is empty. The image file appears to be empty.');
+          }
+
+          // Convertir buffer a base64
+          const base64Data = binaryDataBuffer.toString('base64');
+
+          // Crear objeto con estructura esperada por prepareImage
+          imageData = {
+            data: base64Data,
+            mimeType: binaryMeta.mimeType || 'image/jpeg',
+            fileName: binaryMeta.fileName || filename,
+          };
+
         } else if (imageSource === 'url') {
           imageData = this.getNodeParameter('imageUrl', i) as string;
         } else {
+          // base64
           imageData = this.getNodeParameter('base64Data', i) as string;
         }
 
         // Prepare image with smart MIME detection
-        const preparedImage = await prepareImage(imageSource, imageData, filename);
+        let preparedImage: PreparedImage;
+        
+        try {
+          preparedImage = await prepareImage(imageSource, imageData, filename);
+        } catch (error) {
+          throw new Error(
+            `Failed to prepare image: ${(error as Error).message}\n\n` +
+            `Image source: ${imageSource}`
+          );
+        }
 
         // Build request
         const customHeadersRecord: Record<string, string> = {};
