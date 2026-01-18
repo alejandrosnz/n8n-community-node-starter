@@ -96,6 +96,7 @@ This starter is designed to work seamlessly with modern AI coding assistants lik
 Here are some community nodes that have been built using this starter template:
 
 - **[n8n-nodes-trillium](https://github.com/alejandrosnz/n8n-nodes-trillium)** - Integration with Trillium API
+- **[n8n-nodes-universal-llm-vision](https://github.com/alejandrosnz/n8n-nodes-universal-llm-vision)** - Multi-provider LLM vision node (Analyze images using any provider)
 
 ---
 
